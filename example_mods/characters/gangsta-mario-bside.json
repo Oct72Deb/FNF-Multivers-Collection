@@ -1,0 +1,89 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				53,
+				9
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "char2 right"
+		},
+		{
+			"offsets": [
+				-62,
+				-3
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "char2 left"
+		},
+		{
+			"offsets": [
+				0,
+				29
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singUP",
+			"indices": [],
+			"name": "char2 up"
+		},
+		{
+			"offsets": [
+				202,
+				-78
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN",
+			"indices": [],
+			"name": "char2 down"
+		},
+		{
+			"offsets": [
+				0,
+				0
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "idle",
+			"indices": [],
+			"name": "char2 idle"
+		},
+		{
+			"offsets": [
+				22,
+				6
+			],
+			"loop": false,
+			"fps": 12,
+			"anim": "pissed",
+			"indices": [],
+			"name": "char2 pissed"
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/char2",
+	"position": [
+		20,
+		310
+	],
+	"healthicon": "gangstabside",
+	"flip_x": true,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		-80,
+		60
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

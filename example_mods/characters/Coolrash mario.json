@@ -1,0 +1,89 @@
+{
+	"animations": [
+		{
+			"loop": false,
+			"offsets": [
+				7,
+				-15
+			],
+			"anim": "singDOWN",
+			"fps": 24,
+			"name": "mario down",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-2,
+				23
+			],
+			"anim": "singUP",
+			"fps": 24,
+			"name": "mario up",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				0,
+				0
+			],
+			"anim": "idle",
+			"fps": 24,
+			"name": "mario idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				2,
+				91
+			],
+			"anim": "laugh",
+			"fps": 24,
+			"name": "mario laugh",
+			"indices": []
+		},
+		{
+			"offsets": [
+				4,
+				1
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "mario right"
+		},
+		{
+			"offsets": [
+				1,
+				-4
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "mario left"
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/coolrashnormal",
+	"position": [
+		830,
+		160
+	],
+	"healthicon": "clmario",
+	"flip_x": true,
+	"healthbar_colors": [
+		97,
+		43,
+		36
+	],
+	"camera_position": [
+		-260,
+		50
+	],
+	"sing_duration": 7.49999999999999,
+	"scale": 0.9
+}

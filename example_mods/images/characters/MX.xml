@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="MX.png">
+	<!-- Created with Adobe Animate version 21.0.6.41649 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="MX Note Down0000" x="0" y="0" width="1347" height="1159" pivotX="1320.35" pivotY="576.25" frameX="-12" frameY="-12" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0001" x="0" y="0" width="1347" height="1159" frameX="-12" frameY="-12" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0002" x="1347" y="0" width="1352" height="1173" frameX="0" frameY="0" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0003" x="1347" y="0" width="1352" height="1173" frameX="0" frameY="0" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0004" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0005" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0006" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0007" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0008" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0009" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0010" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0011" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0012" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0013" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0014" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0015" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0016" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0017" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0018" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Down0019" x="2699" y="0" width="1346" height="1168" frameX="-3" frameY="-6" frameWidth="1359" frameHeight="1174"/>
+	<SubTexture name="MX Note Left0000" x="4045" y="0" width="1242" height="1425" pivotX="743.05" pivotY="813.5" frameX="0" frameY="-1" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0001" x="4045" y="0" width="1242" height="1425" frameX="0" frameY="-1" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0002" x="5287" y="0" width="1250" height="1426" frameX="-7" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0003" x="5287" y="0" width="1250" height="1426" frameX="-7" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0004" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0005" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0006" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0007" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0008" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0009" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0010" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0011" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0012" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0013" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0014" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0015" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0016" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0017" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0018" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Left0019" x="6537" y="0" width="1249" height="1426" frameX="-6" frameY="0" frameWidth="1257" frameHeight="1426"/>
+	<SubTexture name="MX Note Right0000" x="0" y="1426" width="1296" height="1437" pivotX="-1068.1" pivotY="902.9" frameX="-2" frameY="0" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0001" x="0" y="1426" width="1296" height="1437" frameX="-2" frameY="0" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0002" x="1296" y="1426" width="1287" height="1414" frameX="0" frameY="-23" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0003" x="1296" y="1426" width="1287" height="1414" frameX="0" frameY="-23" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0004" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0005" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0006" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0007" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0008" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0009" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0010" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0011" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0012" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0013" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0014" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0015" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0016" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0017" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0018" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Right0019" x="2583" y="1426" width="1288" height="1403" frameX="0" frameY="-34" frameWidth="1298" frameHeight="1437"/>
+	<SubTexture name="MX Note Up0000" x="3871" y="1426" width="1203" height="1620" pivotX="498.5" pivotY="977.55" frameX="-20" frameY="0" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0001" x="3871" y="1426" width="1203" height="1620" frameX="-20" frameY="0" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0002" x="5074" y="1426" width="1224" height="1587" frameX="-1" frameY="-31" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0003" x="5074" y="1426" width="1224" height="1587" frameX="-1" frameY="-31" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0004" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0005" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0006" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0007" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0008" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0009" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0010" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0011" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0012" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0013" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0014" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0015" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0016" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0017" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0018" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX Note Up0019" x="6298" y="1426" width="1221" height="1583" frameX="0" frameY="-34" frameWidth="1225" frameHeight="1620"/>
+	<SubTexture name="MX idle0000" x="0" y="3046" width="1092" height="1415" pivotX="638.9" pivotY="756.25" frameX="-9" frameY="-74" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0001" x="0" y="3046" width="1092" height="1415" frameX="-9" frameY="-74" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0002" x="1092" y="3046" width="1109" height="1413" frameX="0" frameY="-77" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0003" x="1092" y="3046" width="1109" height="1413" frameX="0" frameY="-77" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0004" x="2201" y="3046" width="1080" height="1436" frameX="-18" frameY="-55" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0005" x="2201" y="3046" width="1080" height="1436" frameX="-18" frameY="-55" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0006" x="3281" y="3046" width="1033" height="1478" frameX="-36" frameY="-13" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0007" x="3281" y="3046" width="1033" height="1478" frameX="-36" frameY="-13" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0008" x="4314" y="3046" width="1040" height="1491" frameX="-33" frameY="0" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0009" x="4314" y="3046" width="1040" height="1491" frameX="-33" frameY="0" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0010" x="4314" y="3046" width="1040" height="1491" frameX="-33" frameY="0" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0011" x="4314" y="3046" width="1040" height="1491" frameX="-33" frameY="0" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0012" x="4314" y="3046" width="1040" height="1491" frameX="-33" frameY="0" frameWidth="1109" frameHeight="1491"/>
+	<SubTexture name="MX idle0013" x="4314" y="3046" width="1040" height="1491" frameX="-33" frameY="0" frameWidth="1109" frameHeight="1491"/>
+</TextureAtlas>

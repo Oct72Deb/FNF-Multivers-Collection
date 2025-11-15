@@ -1,0 +1,45 @@
+{
+	"storyName": "Your New Week",
+<<<<<<< HEAD
+	"difficulties": "Monika&Sayori,Yuri&Natsuki",
+=======
+	"difficulties": "hard,Monika&Sayori,Yuri&Natsuki",
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+	"hideFreeplay": false,
+	"weekBackground": "",
+	"weekBefore": "tutorial",
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+	"startUnlocked": true,
+	"hideStoryMode": false,
+	"songs": [
+		[
+			"Trick or Treating",
+			"icon-yursuki",
+			[
+				166,
+				113,
+				253
+			]
+		],
+		[
+			"Trick or Treating Old",
+			"sayonika",
+			[
+				126,
+				193,
+				155
+			]
+		]
+	],
+	"weekCharacters": [
+		"",
+		"",
+		""
+	],
+	"hiddenUntilUnlocked": false,
+	"weekName": "Custom Week"
+}

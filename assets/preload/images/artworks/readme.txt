@@ -1,0 +1,1 @@
+default size 1000x1100 maximum

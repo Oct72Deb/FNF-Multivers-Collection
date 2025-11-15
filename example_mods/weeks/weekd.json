@@ -1,0 +1,62 @@
+{
+	"storyName": "Your New Week",
+	"difficulties": "",
+	"hideFreeplay": false,
+	"weekBackground": "stage",
+<<<<<<< HEAD
+	"weekBefore": "tutorial",
+=======
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+<<<<<<< HEAD
+	"startUnlocked": true,
+	"hideStoryMode": false,
+	"songs": [
+		[
+=======
+	"weekBefore": "tutorial",
+	"startUnlocked": true,
+	"weekCharacters": [
+		"dad",
+		"bf",
+		"gf"
+	],
+	"songs": [
+		[
+			"tes",
+			"mario",
+			[
+				146,
+				113,
+				253
+			]
+		],
+		[
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"Periple",
+			"silly",
+			[
+				146,
+				113,
+				253
+			]
+		]
+	],
+<<<<<<< HEAD
+	"weekCharacters": [
+		"dad",
+		"bf",
+		"gf"
+	],
+	"hiddenUntilUnlocked": false,
+	"weekName": "Custom Week"
+=======
+	"hideStoryMode": false,
+	"weekName": "Custom Week",
+	"hiddenUntilUnlocked": false
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+}

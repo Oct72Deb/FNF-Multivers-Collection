@@ -1,0 +1,78 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				0,
+				0
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "idle",
+			"indices": [],
+			"name": "Yuri Idle0"
+		},
+		{
+			"offsets": [
+				-4,
+				-22
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "Yuri Sing Note Left"
+		},
+		{
+			"offsets": [
+				16,
+				1
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "Yuri Sing Note Right"
+		},
+		{
+			"offsets": [
+				23,
+				24
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singUP",
+			"indices": [],
+			"name": "Yuri Sing Note Up"
+		},
+		{
+			"offsets": [
+				-8,
+				-21
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN",
+			"indices": [],
+			"name": "Yuri Sing Note Down"
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/Doki_Yuri_Picnic_Assets",
+	"position": [
+		100,
+		0
+	],
+	"healthicon": "silly",
+	"flip_x": false,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		0,
+		0
+	],
+	"sing_duration": 6,
+	"scale": 1
+}

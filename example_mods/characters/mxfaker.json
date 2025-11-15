@@ -1,0 +1,89 @@
+{
+	"animations": [
+		{
+			"loop": false,
+			"offsets": [
+				-31,
+				-541
+			],
+			"anim": "singLEFT",
+			"fps": 24,
+			"name": "mario left",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-32,
+				-534
+			],
+			"anim": "singDOWN",
+			"fps": 24,
+			"name": "mario down",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-42,
+				-512
+			],
+			"anim": "singUP",
+			"fps": 24,
+			"name": "mario up",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-34,
+				-533
+			],
+			"anim": "singRIGHT",
+			"fps": 24,
+			"name": "mario right",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-42,
+				-530
+			],
+			"anim": "idle-alt",
+			"fps": 24,
+			"name": "mario turn around",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-38,
+				-539
+			],
+			"anim": "idle",
+			"fps": 24,
+			"name": "mario idle",
+			"indices": []
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/fakemx",
+	"position": [
+		310,
+		-710
+	],
+	"healthicon": "icon-fakemx",
+	"flip_x": false,
+	"healthbar_colors": [
+		147,
+		44,
+		2
+	],
+	"camera_position": [
+		-110,
+		510
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

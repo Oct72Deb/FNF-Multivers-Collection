@@ -1,0 +1,2 @@
+Value 1 : set "on" to turn the beat zoom for 0,4 and turn off to stop
+Value 2 : same that Value 1 just 0,2... Meh

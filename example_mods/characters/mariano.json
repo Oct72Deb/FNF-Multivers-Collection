@@ -1,0 +1,34 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				0,
+				0
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "idle",
+			"indices": [],
+			"name": "mariano idle"
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/mariano",
+	"position": [
+		-370,
+		-280
+	],
+	"healthicon": "mariano",
+	"flip_x": false,
+	"healthbar_colors": [
+		253,
+		40,
+		0
+	],
+	"camera_position": [
+		-40,
+		140
+	],
+	"sing_duration": 4,
+	"scale": 0.9
+}

@@ -1,0 +1,111 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				53,
+				9
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "char right"
+		},
+		{
+			"offsets": [
+				-64,
+				-3
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "char left"
+		},
+		{
+			"loop": false,
+			"offsets": [
+				0,
+				29
+			],
+			"anim": "singUP",
+			"fps": 24,
+			"name": "char up",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				0,
+				0
+			],
+			"anim": "hey",
+			"fps": 24,
+			"name": "char hey",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				0,
+				0
+			],
+			"anim": "idle",
+			"fps": 24,
+			"name": "char idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				22,
+				6
+			],
+			"anim": "pissed",
+			"fps": 12,
+			"name": "char pissed",
+			"indices": []
+		},
+		{
+			"offsets": [
+				60,
+				50
+			],
+			"loop": false,
+			"fps": 30,
+			"anim": "shoot",
+			"indices": [],
+			"name": "char gun"
+		},
+		{
+			"offsets": [
+				-8,
+				-78
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN",
+			"indices": [],
+			"name": "char down"
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/char",
+	"position": [
+		-650,
+		310
+	],
+	"healthicon": "gangsta",
+	"flip_x": false,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		-140,
+		0
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

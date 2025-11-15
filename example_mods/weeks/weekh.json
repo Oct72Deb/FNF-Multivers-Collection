@@ -1,0 +1,32 @@
+{
+	"storyName": "practice with gangsta mario",
+	"difficulties": "Easy, Normal, Hard, Erect, Nightmare, Pico-mix, B-side, Corruption, Minus, Bad, In-game-version, In-game-mix, Dead-In-Game-Version, Dead-In-Game-Mix",
+	"hideFreeplay": false,
+	"weekBackground": "tuto",
+	"weekBefore": "Tuto",
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+	"startUnlocked": true,
+	"hideStoryMode": true,
+	"songs": [
+		[
+			"Gangstabattle",
+			"gangsta",
+			[
+				187,
+				57,
+				79
+			]
+		]
+	],
+	"weekCharacters": [
+		"",
+		"",
+		""
+	],
+	"hiddenUntilUnlocked": false,
+	"weekName": "tutorial"
+}

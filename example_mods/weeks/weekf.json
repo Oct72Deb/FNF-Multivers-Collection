@@ -1,0 +1,54 @@
+{
+	"storyName": "Your New Week",
+<<<<<<< HEAD
+	"difficulties": "Easy, Normal, Hard, Erect, Nightmare",
+=======
+	"difficulties": "",
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+	"hideFreeplay": false,
+	"weekBackground": "stage",
+	"weekBefore": "tutorial",
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+	"startUnlocked": true,
+	"hideStoryMode": false,
+	"songs": [
+		[
+<<<<<<< HEAD
+			"Allocution",
+			"macron",
+			[
+				195,
+				195,
+				195
+=======
+			"GangstaBattle",
+			"gangsta",
+			[
+				120,
+				20,
+				60
+			]
+		],
+		[
+			"New Game",
+			"mariano",
+			[
+				120,
+				0,
+				0
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			]
+		]
+	],
+	"weekCharacters": [
+		"dad",
+		"bf",
+		"gf"
+	],
+	"hiddenUntilUnlocked": false,
+	"weekName": "Custom Week"
+}

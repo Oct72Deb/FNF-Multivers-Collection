@@ -1,0 +1,196 @@
+{
+	"animations": [
+		{
+<<<<<<< HEAD
+=======
+			"loop": false,
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				53,
+				9
+			],
+<<<<<<< HEAD
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "char right"
+		},
+		{
+=======
+			"anim": "singLEFT",
+			"fps": 24,
+			"name": "char right",
+			"indices": []
+		},
+		{
+			"loop": false,
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				-64,
+				-3
+			],
+<<<<<<< HEAD
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "char left"
+		},
+		{
+			"loop": false,
+=======
+			"anim": "singRIGHT",
+			"fps": 24,
+			"name": "char left",
+			"indices": []
+		},
+		{
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				0,
+				29
+			],
+<<<<<<< HEAD
+			"anim": "singUP",
+			"fps": 24,
+			"name": "char up",
+			"indices": []
+		},
+		{
+			"loop": false,
+=======
+			"loop": false,
+			"fps": 24,
+			"anim": "singUP",
+			"indices": [],
+			"name": "char up"
+		},
+		{
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				0,
+				0
+			],
+<<<<<<< HEAD
+			"anim": "hey",
+			"fps": 24,
+			"name": "char hey",
+			"indices": []
+		},
+		{
+			"loop": false,
+=======
+			"loop": false,
+			"fps": 24,
+			"anim": "hey",
+			"indices": [],
+			"name": "char hey"
+		},
+		{
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				0,
+				0
+			],
+<<<<<<< HEAD
+			"anim": "idle",
+			"fps": 24,
+			"name": "char idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+=======
+			"loop": false,
+			"fps": 24,
+			"anim": "idle",
+			"indices": [],
+			"name": "char idle"
+		},
+		{
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				22,
+				6
+			],
+<<<<<<< HEAD
+			"anim": "pissed",
+			"fps": 12,
+			"name": "char pissed",
+			"indices": []
+		},
+		{
+=======
+			"loop": false,
+			"fps": 12,
+			"anim": "pissed",
+			"indices": [],
+			"name": "char pissed"
+		},
+		{
+			"loop": false,
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				60,
+				50
+			],
+<<<<<<< HEAD
+			"loop": false,
+			"fps": 30,
+			"anim": "shoot",
+			"indices": [],
+			"name": "char gun"
+		},
+		{
+=======
+			"anim": "shoot",
+			"fps": 30,
+			"name": "char gun",
+			"indices": []
+		},
+		{
+			"loop": false,
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+			"offsets": [
+				-8,
+				-78
+			],
+<<<<<<< HEAD
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN",
+			"indices": [],
+			"name": "char down"
+=======
+			"anim": "singDOWN",
+			"fps": 24,
+			"name": "char down",
+			"indices": []
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/char",
+	"position": [
+		20,
+		310
+	],
+	"healthicon": "gangsta",
+	"flip_x": true,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		-90,
+<<<<<<< HEAD
+		-20
+=======
+		0
+>>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}
