@@ -49,7 +49,6 @@ Le code est traduit en langage **binaire**, ce qui permet d’y jouer sur tous l
 
 Pour la **version 0.6.3**, il te faut :
 
-<<<<<<< HEAD
 ### 🪛 Visual Studio 2022/2026
 Pendant l’installation, ajoute ces composants individuels :
 - **Desktop developpement with C++ "Optional"**
@@ -58,25 +57,11 @@ Pendant l’installation, ajoute ces composants individuels :
 
 ### 💼 Autres outils nécessaires
 - **Haxe** : version **4.2.5** *(ne pas prendre au-dessus)*  
-=======
-### 🪛 Visual Studio 2022
-Pendant l’installation, ajoute ces composants individuels :
-- **Desktop development with C++**
-- **MSVC v142 - VS 2019 C++ x64/x86 build tools**
-- **Windows SDK (10.0.17763.0)**
-
-### 💼 Autres outils nécessaires
-- **Haxe** : version **2.5.0** *(ne pas prendre au-dessus)*  
->>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
 - **HaxeFlixel**  
 - **Git**
 
 Pour installer le reste des outils, voici un lien vers un **Google Drive** contenant tout le nécessaire :  
-<<<<<<< HEAD
 👉 [Voir la documentation](https://drive.google.com/file/d/1_HoXLj_nORyT8AjnVa4I26qOAw0HTwbL/view)
-=======
-👉 [Lien de la Doc](https://drive.google.com/file/d/1_HoXLj_nORyT8AjnVa4I26qOAw0HTwbL/view)
->>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
 
 ---
 
@@ -89,8 +74,4 @@ Pour installer le reste des outils, voici un lien vers un **Google Drive** conte
 
 ---
 
-<<<<<<< HEAD
 ✨ *Merci d’utiliser le moteur ! Amusez-vous bien chers modders.*  
-=======
-✨ *Merci d’utiliser le moteur ! Amusez-vous bien à modder.*  
->>>>>>> f1ddd8e2b2d22239a90c05f80fca8f4b311670e4
