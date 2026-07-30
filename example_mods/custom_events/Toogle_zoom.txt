@@ -1,0 +1,6 @@
+Value 1 : on ou off
+
+Value 2 : - 0.03 (boop continu)
+          - 0.06 (boop refrein)
+
+          Sinon choisi la valeur que tu veux

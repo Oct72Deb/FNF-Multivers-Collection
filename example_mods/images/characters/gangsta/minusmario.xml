@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<TextureAtlas imagePath="minusmario.png"><SubTexture name="minusmario down0000" x="1010" y="1468" width="516" height="427" frameX="-27" frameY="-135" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario down0001" x="1010" y="1468" width="516" height="427" frameX="-27" frameY="-135" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario down0002" x="499" y="1468" width="511" height="435" frameX="-29" frameY="-127" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario down0003" x="499" y="1468" width="511" height="435" frameX="-29" frameY="-127" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario idle0000" x="1012" y="1004" width="498" height="454" frameX="-22" frameY="-11" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0001" x="1012" y="1004" width="498" height="454" frameX="-22" frameY="-11" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0002" x="0" y="1468" width="499" height="447" frameX="-20" frameY="-18" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0003" x="0" y="1468" width="499" height="447" frameX="-20" frameY="-18" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0004" x="507" y="1004" width="505" height="456" frameX="-12" frameY="-9" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0005" x="507" y="1004" width="505" height="456" frameX="-12" frameY="-9" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0006" x="1456" y="465" width="502" height="463" frameX="-12" frameY="-2" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0007" x="1456" y="465" width="502" height="463" frameX="-12" frameY="-2" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0008" x="567" y="537" width="502" height="465" frameX="-11" frameY="0" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario idle0009" x="567" y="537" width="502" height="465" frameX="-11" frameY="0" frameWidth="529" frameHeight="465" />
+<SubTexture name="minusmario left0000" x="889" y="0" width="567" height="470" frameX="-78" frameY="-92" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario left0001" x="889" y="0" width="567" height="470" frameX="-78" frameY="-92" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario left0002" x="0" y="537" width="567" height="467" frameX="-70" frameY="-95" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario left0003" x="0" y="537" width="567" height="467" frameX="-70" frameY="-95" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario right0000" x="1456" y="0" width="504" height="465" frameX="-25" frameY="-97" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario right0001" x="1456" y="0" width="504" height="465" frameX="-25" frameY="-97" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario right0002" x="0" y="1004" width="507" height="464" frameX="-35" frameY="-98" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario right0003" x="0" y="1004" width="507" height="464" frameX="-35" frameY="-98" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario up0000" x="0" y="0" width="449" height="537" frameX="-156" frameY="-25" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario up0001" x="0" y="0" width="449" height="537" frameX="-156" frameY="-25" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario up0002" x="449" y="0" width="440" height="529" frameX="-160" frameY="-33" frameWidth="661" frameHeight="562" />
+<SubTexture name="minusmario up0003" x="449" y="0" width="440" height="529" frameX="-160" frameY="-33" frameWidth="661" frameHeight="562" />
+</TextureAtlas>

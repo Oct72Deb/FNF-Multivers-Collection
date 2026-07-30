@@ -1,0 +1,38 @@
+{
+	"position": [
+		-60,
+		-190
+	],
+	"dialogue_pos": "left",
+	"no_antialiasing": false,
+	"scale": 0.7,
+	"image": "oceane",
+	"animations": [
+		{
+			"loop_offsets": [
+				0,
+				0
+			],
+			"anim": "embarrassed",
+			"idle_offsets": [
+				0,
+				0
+			],
+			"loop_name": "",
+			"idle_name": "embarrassed0000"
+		},
+		{
+			"loop_name": "",
+			"idle_offsets": [
+				0,
+				0
+			],
+			"idle_name": "excited",
+			"anim": "excited",
+			"loop_offsets": [
+				0,
+				0
+			]
+		}
+	]
+}

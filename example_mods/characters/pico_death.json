@@ -1,0 +1,56 @@
+{
+	"animations": [
+		{
+			"loop": false,
+			"offsets": [
+				255,
+				-167
+			],
+			"anim": "firstDeath",
+			"fps": 24,
+			"name": "Pico Death Stab",
+			"indices": []
+		},
+		{
+			"offsets": [
+				255,
+				-167
+			],
+			"loop": true,
+			"fps": 24,
+			"anim": "deathLoop",
+			"indices": [],
+			"name": "Pico Death Loop"
+		},
+		{
+			"loop": true,
+			"offsets": [
+				255,
+				-167
+			],
+			"anim": "deathConfirm",
+			"fps": 24,
+			"name": "Pico Death Loop",
+			"indices": []
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/Pico_Death",
+	"position": [
+		40,
+		30
+	],
+	"healthicon": "pico",
+	"flip_x": true,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		-240,
+		140
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

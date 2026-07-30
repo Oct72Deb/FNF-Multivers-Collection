@@ -1,0 +1,132 @@
+{
+	"dialogue": [
+		{
+			"expression": "embarrassed",
+			"text": "AHH !",
+			"boxState": "angry",
+			"portrait": "oceane",
+			"speed": 0.05,
+			"sound": "dialogue_star"
+		},
+		{
+			"expression": "embarrassed",
+			"text": "Where am I??",
+			"boxState": "normal",
+			"portrait": "oceane",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "excited",
+			"text": "Oh, hi you two!",
+			"boxState": "normal",
+			"portrait": "oceane",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "talk",
+			"text": "Hey, my name’s Nene.",
+			"boxState": "normal",
+			"portrait": "gf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "talk",
+			"text": "And that’s Pico.",
+			"boxState": "normal",
+			"portrait": "gf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "talk",
+			"text": "Yo.",
+			"boxState": "normal",
+			"portrait": "bf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "excited",
+			"text": "Oh, that’s so cool! Are you a couple??",
+			"boxState": "normal",
+			"portrait": "oceane",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "confused",
+			"text": "Absolutely not!",
+			"boxState": "normal",
+			"portrait": "bf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "demon",
+			"text": "You sure about that?",
+			"boxState": "normal",
+			"portrait": "gf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "talk",
+			"text": "Uhhhhhhhhhhhhhhhhhhhhhhh",
+			"boxState": "normal",
+			"portrait": "bf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "excited",
+			"text": "*laughs*",
+			"boxState": "normal",
+			"portrait": "oceane",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "pissed",
+			"text": "Laugh again and I'll shoot you in the head :)",
+			"boxState": "normal",
+			"portrait": "bf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "embarrassed",
+			"text": "Yeah no, it’s fine, thanks...",
+			"boxState": "normal",
+			"portrait": "oceane",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "talk",
+			"text": "Don’t be so aggressive with people.\r",
+			"boxState": "normal",
+			"portrait": "gf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "demon",
+			"text": "It’s better to slit their throat!",
+			"boxState": "normal",
+			"portrait": "gf",
+			"speed": 0.05,
+			"sound": ""
+		},
+		{
+			"expression": "embarrassed",
+			"text": "...",
+			"boxState": "normal",
+			"portrait": "oceane",
+			"speed": 0.2,
+			"sound": ""
+		}
+	]
+}
