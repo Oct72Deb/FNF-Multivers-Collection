@@ -1,0 +1,78 @@
+{
+	"animations": [
+		{
+			"loop": false,
+			"offsets": [
+				50,
+				-4
+			],
+			"anim": "idle",
+			"fps": 24,
+			"name": "macron alt idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				240,
+				-49
+			],
+			"anim": "singLEFT",
+			"fps": 24,
+			"name": "macron alt left",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				40,
+				-80
+			],
+			"anim": "singDOWN",
+			"fps": 24,
+			"name": "macron alt down",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				383,
+				140
+			],
+			"anim": "singUP",
+			"fps": 24,
+			"name": "macron alt up",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-60,
+				0
+			],
+			"anim": "singRIGHT",
+			"fps": 24,
+			"name": "macron alt right",
+			"indices": []
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/macron_sheet",
+	"position": [
+		0,
+		0
+	],
+	"healthicon": "macron-scream",
+	"flip_x": false,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		-260,
+		40
+	],
+	"sing_duration": 4,
+	"scale": 1
+}

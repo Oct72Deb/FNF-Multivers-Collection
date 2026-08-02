@@ -1,0 +1,41 @@
+{
+	"storyName": "Your New Week",
+	"difficulties": "",
+	"hideFreeplay": false,
+	"weekBackground": "stage",
+	"weekBefore": "weeka",
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+	"startUnlocked": false,
+	"hideStoryMode": true,
+	"songs": [
+		[
+			"Criminal Targets",
+			"mj",
+			[
+				255,
+				255,
+				255
+			]
+		],
+		[
+			"Crash Out",
+			"puff",
+			[
+				0,
+				255,
+				0
+			]
+		]
+	],
+	"weekCharacters": [
+		"dad",
+		"bf",
+		"gf"
+	],
+	"hiddenUntilUnlocked": true,
+	"weekName": "Custom Week"
+}

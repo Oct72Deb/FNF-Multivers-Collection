@@ -1,0 +1,78 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				0,
+				-312
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "idle",
+			"indices": [],
+			"name": "minusmario idle"
+		},
+		{
+			"offsets": [
+				51,
+				-215
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "minusmario left"
+		},
+		{
+			"offsets": [
+				51,
+				-215
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN",
+			"indices": [],
+			"name": "minusmario down"
+		},
+		{
+			"offsets": [
+				51,
+				-215
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singUP",
+			"indices": [],
+			"name": "minusmario up"
+		},
+		{
+			"offsets": [
+				53,
+				-215
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "minusmario right"
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/minusmario",
+	"position": [
+		0,
+		0
+	],
+	"healthicon": "gangstaold",
+	"flip_x": true,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		-50,
+		270
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

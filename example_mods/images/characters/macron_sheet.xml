@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="macron_sheet.png">
+	<!-- Created with Adobe Animate version 24.0.0.305 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="macron alt down0000" x="5" y="5" width="786" height="546" frameX="0" frameY="-7" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0001" x="5" y="5" width="786" height="546" frameX="0" frameY="-7" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0002" x="791" y="5" width="773" height="552" frameX="-2" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0003" x="791" y="5" width="773" height="552" frameX="-2" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0004" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0005" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0006" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0007" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0008" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0009" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0010" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0011" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0012" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0013" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0014" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0015" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0016" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0017" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0018" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt down0019" x="1564" y="5" width="765" height="553" frameX="-5" frameY="0" frameWidth="786" frameHeight="553"/>
+	<SubTexture name="macron alt idle0000" x="2329" y="5" width="712" height="585" frameX="0" frameY="-8" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0001" x="2329" y="5" width="712" height="585" frameX="0" frameY="-8" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0002" x="3041" y="5" width="706" height="591" frameX="-2" frameY="-2" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0003" x="3041" y="5" width="706" height="591" frameX="-2" frameY="-2" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0004" x="3747" y="5" width="701" height="593" frameX="-5" frameY="0" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0005" x="3747" y="5" width="701" height="593" frameX="-5" frameY="0" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0006" x="4448" y="5" width="701" height="593" frameX="-5" frameY="0" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0007" x="4448" y="5" width="701" height="593" frameX="-5" frameY="0" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0008" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0009" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0010" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0011" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0012" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0013" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt idle0014" x="5149" y="5" width="701" height="592" frameX="-5" frameY="-1" frameWidth="712" frameHeight="593"/>
+	<SubTexture name="macron alt left0000" x="5850" y="5" width="811" height="544" frameX="0" frameY="-6" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0001" x="5850" y="5" width="811" height="544" frameX="0" frameY="-6" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0002" x="6661" y="5" width="793" height="550" frameX="-18" frameY="0" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0003" x="6661" y="5" width="793" height="550" frameX="-18" frameY="0" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0004" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0005" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0006" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0007" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0008" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0009" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0010" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0011" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0012" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0013" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0014" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0015" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0016" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0017" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0018" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt left0019" x="5" y="598" width="783" height="548" frameX="-28" frameY="-2" frameWidth="811" frameHeight="550"/>
+	<SubTexture name="macron alt right0000" x="788" y="598" width="1063" height="716"/>
+	<SubTexture name="macron alt right0001" x="788" y="598" width="1063" height="716"/>
+	<SubTexture name="macron alt right0002" x="1851" y="598" width="1054" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0003" x="1851" y="598" width="1054" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0004" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0005" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0006" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0007" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0008" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0009" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0010" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0011" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0012" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0013" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0014" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0015" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0016" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0017" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0018" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt right0019" x="2905" y="598" width="1050" height="714" frameX="-1" frameY="-2" frameWidth="1063" frameHeight="716"/>
+	<SubTexture name="macron alt up0000" x="3955" y="598" width="1393" height="739" frameX="0" frameY="0" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0001" x="3955" y="598" width="1393" height="739" frameX="0" frameY="0" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0002" x="5348" y="598" width="1394" height="728" frameX="-2" frameY="-11" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0003" x="5348" y="598" width="1394" height="728" frameX="-2" frameY="-11" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0004" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0005" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0006" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0007" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0008" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0009" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0010" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0011" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0012" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0013" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0014" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0015" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0016" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0017" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0018" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron alt up0019" x="6742" y="598" width="1397" height="720" frameX="-1" frameY="-19" frameWidth="1398" frameHeight="739"/>
+	<SubTexture name="macron down0000" x="5" y="1337" width="902" height="586" frameX="0" frameY="-7" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0001" x="5" y="1337" width="902" height="586" frameX="0" frameY="-7" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0002" x="907" y="1337" width="895" height="590" frameX="-4" frameY="-3" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0003" x="907" y="1337" width="895" height="590" frameX="-4" frameY="-3" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0004" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0005" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0006" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0007" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0008" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0009" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0010" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0011" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0012" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0013" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0014" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0015" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0016" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0017" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0018" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron down0019" x="1802" y="1337" width="890" height="593" frameX="-7" frameY="0" frameWidth="902" frameHeight="593"/>
+	<SubTexture name="macron idle0000" x="2692" y="1337" width="626" height="591" frameX="0" frameY="-6" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0001" x="2692" y="1337" width="626" height="591" frameX="0" frameY="-6" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0002" x="3318" y="1337" width="624" height="597" frameX="-1" frameY="0" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0003" x="3318" y="1337" width="624" height="597" frameX="-1" frameY="0" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0004" x="3942" y="1337" width="621" height="597" frameX="-3" frameY="0" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0005" x="3942" y="1337" width="621" height="597" frameX="-3" frameY="0" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0006" x="4563" y="1337" width="621" height="596" frameX="-3" frameY="-1" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0007" x="4563" y="1337" width="621" height="596" frameX="-3" frameY="-1" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0008" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0009" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0010" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0011" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0012" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0013" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron idle0014" x="5184" y="1337" width="621" height="595" frameX="-3" frameY="-2" frameWidth="626" frameHeight="597"/>
+	<SubTexture name="macron left0000" x="5805" y="1337" width="671" height="584" frameX="0" frameY="-3" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0001" x="5805" y="1337" width="671" height="584" frameX="0" frameY="-3" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0002" x="6476" y="1337" width="661" height="587" frameX="-10" frameY="0" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0003" x="6476" y="1337" width="661" height="587" frameX="-10" frameY="0" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0004" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0005" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0006" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0007" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0008" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0009" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0010" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0011" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0012" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0013" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0014" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0015" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0016" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0017" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0018" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron left0019" x="7137" y="1337" width="656" height="585" frameX="-15" frameY="-2" frameWidth="671" frameHeight="587"/>
+	<SubTexture name="macron right0000" x="5" y="1934" width="1408" height="847" frameX="0" frameY="-8" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0001" x="5" y="1934" width="1408" height="847" frameX="0" frameY="-8" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0002" x="1413" y="1934" width="1370" height="851" frameX="-12" frameY="0" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0003" x="1413" y="1934" width="1370" height="851" frameX="-12" frameY="0" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0004" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0005" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0006" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0007" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0008" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0009" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0010" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0011" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0012" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0013" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0014" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0015" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0016" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0017" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0018" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron right0019" x="2783" y="1934" width="1349" height="846" frameX="-19" frameY="-2" frameWidth="1408" frameHeight="855"/>
+	<SubTexture name="macron up0000" x="4132" y="1934" width="878" height="886" frameX="-10" frameY="0" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0001" x="4132" y="1934" width="878" height="886" frameX="-10" frameY="0" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0002" x="5010" y="1934" width="883" height="875" frameX="-5" frameY="-9" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0003" x="5010" y="1934" width="883" height="875" frameX="-5" frameY="-9" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0004" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0005" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0006" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0007" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0008" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0009" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0010" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0011" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0012" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0013" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0014" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0015" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0016" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0017" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0018" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+	<SubTexture name="macron up0019" x="5893" y="1934" width="888" height="864" frameX="0" frameY="-16" frameWidth="888" frameHeight="886"/>
+</TextureAtlas>

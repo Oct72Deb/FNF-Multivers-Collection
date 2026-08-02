@@ -1,0 +1,41 @@
+{
+	"storyName": "Nintendo All Star! Dairantou Smash Brothers",
+	"difficulties": "VeryEasy, Easy, Normal, Hard, VeryHard",
+	"hideFreeplay": false,
+	"weekBackground": "stage",
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+	"weekBefore": "tutorial",
+	"startUnlocked": true,
+	"weekCharacters": [
+		"dad",
+		"bf",
+		"gf"
+	],
+	"songs": [
+		[
+			"How to Play",
+			"htp",
+			[
+				100,
+				100,
+				100
+			]
+		],
+		[
+			"Metal Reflection",
+			"metal",
+			[
+				100,
+				100,
+				100
+			]
+		]
+	],
+	"hideStoryMode": false,
+	"weekName": "Custom Week",
+	"hiddenUntilUnlocked": false
+}
