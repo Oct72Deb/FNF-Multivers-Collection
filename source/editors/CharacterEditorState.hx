@@ -6,7 +6,6 @@ import Discord.DiscordClient;
 
 import states.MusicBeatState;
 
-import animateatlas.AtlasFrameMaker;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSprite;
@@ -835,11 +834,12 @@ class CharacterEditorState extends MusicBeatState
 			lastAnim = char.animation.curAnim.name;
 		}
 		var anims:Array<AnimArray> = char.animationsArray.copy();
-		if(Paths.fileExists('images/' + char.imageFile + '/Animation.json', TEXT)) {
-			char.frames = AtlasFrameMaker.construct(char.imageFile);
-		} else if(Paths.fileExists('images/' + char.imageFile + '.txt', TEXT)) {
+		if(Paths.fileExists('images/' + char.imageFile + '.txt', TEXT))
+		{
 			char.frames = Paths.getPackerAtlas(char.imageFile);
-		} else {
+		} 
+		else 
+		{
 			char.frames = Paths.getSparrowAtlas(char.imageFile);
 		}
 

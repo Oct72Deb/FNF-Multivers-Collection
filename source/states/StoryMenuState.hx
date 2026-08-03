@@ -97,13 +97,15 @@ class StoryMenuState extends MusicBeatState
 		DiscordClient.changePresence("In the Menus", null);
 		#end
 
-		var num:Int = 0;
-		for (i in 0...WeekData.weeksList.length)
-		{
-			var weekFile:WeekData = WeekData.weeksLoaded.get(WeekData.weeksList[i]);
-			var isLocked:Bool = weekIsLocked(WeekData.weeksList[i]);
-			if(!isLocked || !weekFile.hiddenUntilUnlocked)
-			{
+var num:Int = 0;
+for (i in 0...WeekData.weeksList.length)
+{
+    if(WeekData.weeksList[i] == WeekbUnlock.HIDDEN_WEEK_NAME) continue; // "weekb" jamais visible en Story Mode
+
+    var weekFile:WeekData = WeekData.weeksLoaded.get(WeekData.weeksList[i]);
+    var isLocked:Bool = weekIsLocked(WeekData.weeksList[i]);
+    if(!isLocked || !weekFile.hiddenUntilUnlocked)
+    {
 				loadedWeeks.push(weekFile);
 				WeekData.setDirectoryFromWeek(weekFile);
 				var weekThing:MenuItem = new MenuItem(0, bgSprite.y + 396, WeekData.weeksList[i]);

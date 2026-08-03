@@ -114,8 +114,20 @@ class FreeplayState extends MusicBeatState
 		DiscordClient.changePresence("In the Menus", null);
 		#end
 
-		for (i in 0...WeekData.weeksList.length) {
+for (i in 0...WeekData.weeksList.length) {
 			if(weekIsLocked(WeekData.weeksList[i])) continue;
+
+			// --- Condition custom pour "weekb" ---
+			if(WeekData.weeksList[i] == WeekbUnlock.HIDDEN_WEEK_NAME)
+			{
+				var diffCount:Int = CoolUtil.defaultDifficulties.length;
+				if(WeekData.weeksLoaded.exists("weeka"))
+				{
+					diffCount = getDifficultyCountForWeek(WeekData.weeksLoaded.get("weeka"));
+				}
+				if(!WeekbUnlock.isUnlocked(diffCount)) continue;
+			}
+			// --- Fin condition custom ---
 
 			var leWeek:WeekData = WeekData.weeksLoaded.get(WeekData.weeksList[i]);
 			var leSongs:Array<String> = [];
@@ -136,7 +148,6 @@ class FreeplayState extends MusicBeatState
 					colors = [146, 113, 253];
 				}
 
-				// Lecture des icônes par difficulté (4ème élément optionnel du JSON)
 				var diffIcons:Map<String, String> = new Map();
 				var rawDiffIcons = song[3];
 				if(rawDiffIcons != null)
@@ -688,6 +699,33 @@ class FreeplayState extends MusicBeatState
 			var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
 			artSub.setDifficulty(curDifficulty);
 		}
+	}
+// Reproduit la logique de parsing de "difficulties" utilisée dans changeSelection(),
+	// pour compter le nombre de difficultés propres à une week donnée (ici "weeka").
+	function getDifficultyCountForWeek(week:WeekData):Int
+	{
+		var diffStr:String = week.difficulties;
+		if(diffStr != null) diffStr = diffStr.trim();
+
+		if(diffStr != null && diffStr.length > 0)
+		{
+			var diffs:Array<String> = diffStr.split(',');
+			var i:Int = diffs.length - 1;
+			while (i > 0)
+			{
+				if(diffs[i] != null)
+				{
+					diffs[i] = diffs[i].trim();
+					if(diffs[i].length < 1) diffs.remove(diffs[i]);
+				}
+				--i;
+			}
+
+			if(diffs.length > 0 && diffs[0].length > 0)
+				return diffs.length;
+		}
+
+		return CoolUtil.defaultDifficulties.length;
 	}
 
 	function changeDiff(change:Int = 0)
