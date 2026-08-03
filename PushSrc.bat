@@ -82,10 +82,31 @@ if errorlevel 1 (
     echo [INFO] Aucun nouveau changement a commit, ou erreur de commit.
 )
 
+REM ==== Synchronisation avec le distant (merge, pas d'ecrasement) ====
+echo.
+echo === Synchronisation avec origin/!BRANCH! ===
+git fetch origin "!BRANCH!" >nul 2>&1
+if not errorlevel 1 (
+    git merge "origin/!BRANCH!" --no-edit
+    if errorlevel 1 (
+        echo.
+        echo [ATTENTION] Conflit de fusion detecte.
+        echo Resous les conflits manuellement, puis relance ce script pour finir le push.
+        echo.
+        pause
+        exit /b 1
+    ) else (
+        echo Synchronisation OK : les fichiers non modifies localement ont ete conserves,
+        echo seuls les fichiers changes ont ete mis a jour.
+    )
+) else (
+    echo Pas de branche distante "!BRANCH!" existante, rien a synchroniser.
+)
+
 REM ==== Choix force ou non ====
 echo.
 echo Mode de push :
-echo   1 = normal (git push)                     -- le plus sur
+echo   1 = normal (git push)                     -- le plus sur, recommande apres synchronisation
 echo   2 = force-with-lease                       -- ecrase, mais bloque si qqn a pousse entre-temps
 echo   3 = force pur (--force)                    -- ecrase sans aucune verification, DANGEREUX
 set /p PUSH_MODE="Choix (Entree = 1) : "

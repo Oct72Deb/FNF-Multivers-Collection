@@ -25,11 +25,11 @@ function onCreatePost()
     addLuaSprite('videoSprite', true)
     setProperty('videoSprite.visible', false)
 
-    addHaxeLibrary('MP4Handler', 'vlc')
+    addHaxeLibrary('VideoHandler', 'vlc')
     addHaxeLibrary('Event', 'openfl.events')
 
     runHaxeCode([[
-        var video = new MP4Handler();
+        var video = new VideoHandler();
         video.visible = false;
         setVar('video', video);
     ]])
