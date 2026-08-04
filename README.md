@@ -45,7 +45,7 @@ Le code est traduit en langage binaire pour pouvoir être exécuté sur ta machi
 
 ### Outils requis (version 0.6.3)
 
-#### Visual Studio 2022
+#### Visual Studio 2026
 
 Pendant l'installation, ajoute ces composants individuels :
 
