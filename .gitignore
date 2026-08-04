@@ -1,0 +1,4 @@
+# Ignore tout le contenu de export/, mais garde here.txt pour que le dossier
+# existe quand même sur GitHub (Git ne suit jamais les dossiers vides).
+export/*
+!export/here.txt
