@@ -52,7 +52,6 @@ Pour la **version 0.6.3**, il te faut :
 ### 🪛 Visual Studio 2022/2026
 Pendant l’installation, ajoute ces composants individuels :
 - **Desktop developpement with C++ "Optional"**
-- **MSVC v142 - VS 2019 C++ x64/x86 build tools**
 - **Windows SDK 11 or 10**
 
 ### 💼 Autres outils nécessaires

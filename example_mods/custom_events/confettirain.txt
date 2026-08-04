@@ -1,2 +1,0 @@
-Value 1: quantité
-Value 2: vitesse
