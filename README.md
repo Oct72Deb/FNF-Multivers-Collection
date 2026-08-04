@@ -13,6 +13,10 @@ Le build a été modifié et réorganisé pour le développement du moteur.
 ### Modifications principales
 
 - Rangement des fichiers sources `.hx` dans des dossiers *(comme sur la 0.7)*.
+
+<img width="1360" height="814" alt="image" src="https://github.com/user-attachments/assets/47042fc5-82a9-472a-930f-1a4b2e3962b3" />
+
+
 - Correction d'un gros bug de **shader** survenant lors de l'utilisation de scripts **Lua** pour changer les couleurs du stage, du background, de la barre de vie, etc.
 - Suppression de plusieurs défauts de FNF que l'équipe n'aimait pas.
 
