@@ -1,0 +1,9 @@
+Value 1 : (Intensité)
+
+0.01 : Drain léger.
+
+0.03 : Drain agressif.
+
+0.05 : Très difficile !
+
+Value 2 : on ou off

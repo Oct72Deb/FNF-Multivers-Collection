@@ -1,0 +1,10 @@
+Flash Color :)
+
+
+
+Value 1: put your code color
+example : 'FFFFFF'
+
+Value 2: set the second of the fade out 
+example : 1.5
+

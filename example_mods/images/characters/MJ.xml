@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+<TextureAtlas imagePath="MJ.png">
+<SubTexture name="MJ down0000" x="373" y="831" width="380" height="755" frameX="-56" frameY="-14" frameWidth="453" frameHeight="769" />
+<SubTexture name="MJ down0001" x="373" y="831" width="380" height="755" frameX="-56" frameY="-14" frameWidth="453" frameHeight="769" />
+<SubTexture name="MJ down0002" x="0" y="831" width="373" height="762" frameX="-46" frameY="-7" frameWidth="453" frameHeight="769" />
+<SubTexture name="MJ down0003" x="0" y="831" width="373" height="762" frameX="-46" frameY="-7" frameWidth="453" frameHeight="769" />
+<SubTexture name="MJ idle0000" x="1341" y="1593" width="447" height="563" frameX="0" frameY="-69" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0001" x="1341" y="1593" width="447" height="563" frameX="0" frameY="-69" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0002" x="894" y="1593" width="447" height="579" frameX="0" frameY="-53" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0003" x="894" y="1593" width="447" height="579" frameX="0" frameY="-53" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0004" x="447" y="1593" width="447" height="595" frameX="0" frameY="-37" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0005" x="447" y="1593" width="447" height="595" frameX="0" frameY="-37" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0006" x="0" y="1593" width="447" height="616" frameX="0" frameY="-16" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0007" x="0" y="1593" width="447" height="616" frameX="0" frameY="-16" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0008" x="753" y="831" width="447" height="632" frameX="0" frameY="0" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ idle0009" x="753" y="831" width="447" height="632" frameX="0" frameY="0" frameWidth="447" frameHeight="632" />
+<SubTexture name="MJ left0000" x="976" y="0" width="488" height="827" frameX="-39" frameY="-35" frameWidth="541" frameHeight="862" />
+<SubTexture name="MJ left0001" x="976" y="0" width="488" height="827" frameX="-39" frameY="-35" frameWidth="541" frameHeight="862" />
+<SubTexture name="MJ left0002" x="1464" y="0" width="483" height="826" frameX="-58" frameY="-36" frameWidth="541" frameHeight="862" />
+<SubTexture name="MJ left0003" x="1464" y="0" width="483" height="826" frameX="-58" frameY="-36" frameWidth="541" frameHeight="862" />
+<SubTexture name="MJ right0000" x="0" y="0" width="490" height="831" frameX="-25" frameY="-25" frameWidth="540" frameHeight="857" />
+<SubTexture name="MJ right0001" x="0" y="0" width="490" height="831" frameX="-25" frameY="-25" frameWidth="540" frameHeight="857" />
+<SubTexture name="MJ right0002" x="490" y="0" width="486" height="830" frameX="-15" frameY="-25" frameWidth="540" frameHeight="857" />
+<SubTexture name="MJ right0003" x="490" y="0" width="486" height="830" frameX="-15" frameY="-25" frameWidth="540" frameHeight="857" />
+<SubTexture name="MJ up0000" x="1200" y="831" width="417" height="627" frameX="-18" frameY="-25" frameWidth="439" frameHeight="652" />
+<SubTexture name="MJ up0001" x="1200" y="831" width="417" height="627" frameX="-18" frameY="-25" frameWidth="439" frameHeight="652" />
+<SubTexture name="MJ up0002" x="1947" y="625" width="416" height="619" frameX="-22" frameY="-33" frameWidth="439" frameHeight="652" />
+<SubTexture name="MJ up0003" x="1947" y="625" width="416" height="619" frameX="-22" frameY="-33" frameWidth="439" frameHeight="652" />
+<SubTexture name="MJ punch0000" x="1947" y="0" width="751" height="625" frameX="-4" frameY="0" frameWidth="768" frameHeight="625" />
+</TextureAtlas>

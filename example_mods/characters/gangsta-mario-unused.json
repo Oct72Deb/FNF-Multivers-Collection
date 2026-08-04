@@ -1,0 +1,78 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				0,
+				0
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "idle",
+			"indices": [],
+			"name": "unusedgangsta idle"
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-78,
+				-41
+			],
+			"anim": "singDOWN",
+			"fps": 24,
+			"name": "unusedgangsta down",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-67,
+				48
+			],
+			"anim": "singUP",
+			"fps": 24,
+			"name": "unusedgangsta up",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-118,
+				-23
+			],
+			"anim": "singRIGHT",
+			"fps": 24,
+			"name": "unusedgangsta left",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-2,
+				-21
+			],
+			"anim": "singLEFT",
+			"fps": 24,
+			"name": "unusedgangsta right",
+			"indices": []
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/unusedgangsta",
+	"position": [
+		-40,
+		300
+	],
+	"healthicon": "gangsta",
+	"flip_x": true,
+	"healthbar_colors": [
+		255,
+		0,
+		0
+	],
+	"camera_position": [
+		120,
+		40
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

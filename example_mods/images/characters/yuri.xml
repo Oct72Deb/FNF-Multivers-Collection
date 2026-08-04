@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<TextureAtlas imagePath="yuri.png">
+<SubTexture name="down0000" x="0" y="956" width="538" height="941" frameX="-228" frameY="-8" frameWidth="960" frameHeight="960" />
+<SubTexture name="down0001" x="0" y="956" width="538" height="941" frameX="-228" frameY="-8" frameWidth="960" frameHeight="960" />
+<SubTexture name="down0002" x="1056" y="956" width="518" height="933" frameX="-245" frameY="-3" frameWidth="960" frameHeight="960" />
+<SubTexture name="down0003" x="1056" y="956" width="518" height="933" frameX="-245" frameY="-3" frameWidth="960" frameHeight="960" />
+<SubTexture name="idle0000" x="1574" y="956" width="518" height="933" frameX="-245" frameY="-27" frameWidth="960" frameHeight="960" />
+<SubTexture name="left0000" x="536" y="0" width="561" height="947" frameX="-216" frameY="-13" frameWidth="960" frameHeight="960" />
+<SubTexture name="left0001" x="536" y="0" width="561" height="947" frameX="-216" frameY="-13" frameWidth="960" frameHeight="960" />
+<SubTexture name="left0002" x="1616" y="0" width="547" height="943" frameX="-232" frameY="-17" frameWidth="960" frameHeight="960" />
+<SubTexture name="left0003" x="1616" y="0" width="547" height="943" frameX="-232" frameY="-17" frameWidth="960" frameHeight="960" />
+<SubTexture name="right0000" x="0" y="0" width="536" height="956" frameX="-210" frameY="-4" frameWidth="960" frameHeight="960" />
+<SubTexture name="right0001" x="0" y="0" width="536" height="956" frameX="-210" frameY="-4" frameWidth="960" frameHeight="960" />
+<SubTexture name="right0002" x="1097" y="0" width="519" height="946" frameX="-211" frameY="-14" frameWidth="960" frameHeight="960" />
+<SubTexture name="right0003" x="1097" y="0" width="519" height="946" frameX="-211" frameY="-14" frameWidth="960" frameHeight="960" />
+<SubTexture name="up0000" x="538" y="956" width="518" height="937" frameX="-231" frameY="-23" frameWidth="960" frameHeight="960" />
+<SubTexture name="up0001" x="538" y="956" width="518" height="937" frameX="-231" frameY="-23" frameWidth="960" frameHeight="960" />
+<SubTexture name="up0002" x="2163" y="0" width="518" height="933" frameX="-236" frameY="-27" frameWidth="960" frameHeight="960" />
+<SubTexture name="up0003" x="2163" y="0" width="518" height="933" frameX="-236" frameY="-27" frameWidth="960" frameHeight="960" />
+</TextureAtlas>
