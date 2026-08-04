@@ -1,3 +1,0 @@
-Value 1 → Nouvelle vitesse de la caméra
-
-Value 2 → durée du tween (0 = instantané)

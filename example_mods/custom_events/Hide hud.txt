@@ -1,2 +1,0 @@
-Value1 - opacity (0 - hidden, 1 - visible)
-Value2 - duration

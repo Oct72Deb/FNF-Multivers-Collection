@@ -1,4 +1,0 @@
-V1 : bf, dad, gf, duo, trio 
-disco-bf, disco-dad, disco-gf, disco-duo, disco-trio
-
-V2 (Offsets) : X_Dad, Y_Dad, X_BF, Y_BF, X_GF, Y_GF
