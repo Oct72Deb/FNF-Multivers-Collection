@@ -610,13 +610,16 @@ for (i in 0...WeekData.weeksList.length) {
 			var diffFormattedName:String = Highscore.formatSong(baseSongKey, curDifficulty);
 
 			var targetTrack:String = baseSongKey;
+			var loadedSong:Dynamic = null; // On garde le chart chargé pour éviter de le recharger 2x
+
 			try {
-				var tempSong = Song.loadFromJson(diffFormattedName, baseSongKey);
-				if (tempSong != null && tempSong.song != null) {
-					targetTrack = Paths.formatToSongPath(tempSong.song);
+				loadedSong = Song.loadFromJson(diffFormattedName, baseSongKey);
+				if (loadedSong != null && loadedSong.song != null) {
+					targetTrack = Paths.formatToSongPath(loadedSong.song);
 				}
 			} catch(e:Dynamic) {
 				// En cas d'erreur, on reste sur le morceau de base
+				loadedSong = null;
 			}
 
 			if (targetTrack != instNamePlaying)
@@ -630,10 +633,26 @@ for (i in 0...WeekData.weeksList.length) {
 				if (targetTrack == "metal reflection" || targetTrack == "metal-reflection")
 					FlxG.sound.music.time = 7500;
 
-				var tempSongForBpm = Song.loadFromJson(diffFormattedName, baseSongKey);
-				var bpm:Int = (tempSongForBpm != null) ? Std.int(tempSongForBpm.bpm) : 120;
+				var bpm:Int = (loadedSong != null) ? Std.int(loadedSong.bpm) : 120;
+				PlayState.SONG = loadedSong != null ? loadedSong : cast { song: targetTrack, notes: [], bpm: bpm };
+
+				// ✅ changeBPM ne suffit pas : il faut aussi remapper les sections
+				// (sinon sectionHit() peut se baser sur la table de l'ancienne chanson,
+				// d'où le "boop" instable)
 				Conductor.changeBPM(bpm);
-				PlayState.SONG = tempSongForBpm != null ? tempSongForBpm : cast { song: targetTrack, notes: [], bpm: bpm };
+				Conductor.mapBPMChanges(PlayState.SONG);
+
+				// ✅ Le VRAI bug : ces compteurs sont hérités de MusicBeatState et ne sont
+				// JAMAIS remis à zéro entre deux chansons en freeplay (contrairement au
+				// PlayState, qui recrée un état neuf à chaque chanson). Sans ce reset,
+				// curSection garde la valeur de l'ancienne chanson, et sectionHit() ne se
+				// redéclenche que si curSection dépasse cette ancienne valeur.
+				curStep = 0;
+				curBeat = 0;
+				curDecStep = 0;
+				curDecBeat = 0;
+				curSection = 0;
+				stepsToDo = 0;
 			}
 
 			if (subState != null && Std.is(subState, ArtworkSubstate)) {

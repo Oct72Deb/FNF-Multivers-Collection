@@ -850,9 +850,11 @@ class PlayState extends MusicBeatState
 			case 'stress':
 				GameOverSubstate.characterName = 'bf-holding-gf-dead';
 
+			case 'periple':
+				GameOverSubstate.deathSoundName = 'fnf_loss_sfx_mry';
+
 			case 'gangstabattle-dead-in-game-version':
 				GameOverSubstate.deathSoundName = 'fnf_loss_sfx_igv';
-				GameOverSubstate.loopSoundName = 'g̶̪̲̥̤͕̝̞͍̲̟̾̑̎͊̋͐̉̓͘a̶̧͕̬͈̩̩͈̩̔̅͑͗͊́͑̈́͗̚͜m̶̧͓̻̈́̀̒ě̷͚͆͋͋Ö̶̞̭̮̞̻̼̲̯͈́̐̑͝͠ͅv̸͍̹̊̈͆̏ề̶͚͍̱̣̗͇̹̠͇̏̔͑̅͜r̷͇̲̺̼̮̠̬̱̤̱͂̓̊́̌̍̕̕͝-̴̰̩̗͔͈̓̍́͝ͅI̴̦͋͛͑̿G̵͍̟̲̱̈́V̸̯̘̳̖̌';
 				GameOverSubstate.endSoundName = 'none';
 				GameOverSubstate.characterName = 'bplayer';
 				
@@ -2472,8 +2474,9 @@ class PlayState extends MusicBeatState
 				for (i in 0...event[1].length)
 				{
 					var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
+					var eventOffset:Float = (newEventNote[1] == 'playsound') ? 0 : ClientPrefs.noteOffset; // Ignore noteOffset for playsound events
 					var subEvent:EventNote = {
-						strumTime: newEventNote[0] + ClientPrefs.noteOffset,
+						strumTime: newEventNote[0] + eventOffset,
 						event: newEventNote[1],
 						value1: newEventNote[2],
 						value2: newEventNote[3]
@@ -2573,8 +2576,9 @@ class PlayState extends MusicBeatState
 			for (i in 0...event[1].length)
 			{
 				var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
+				var eventOffset:Float = (newEventNote[1] == 'playsound') ? 0 : ClientPrefs.noteOffset; // Ignore noteOffset for playsound events
 				var subEvent:EventNote = {
-					strumTime: newEventNote[0] + ClientPrefs.noteOffset,
+					strumTime: newEventNote[0] + eventOffset,
 					event: newEventNote[1],
 					value1: newEventNote[2],
 					value2: newEventNote[3]
