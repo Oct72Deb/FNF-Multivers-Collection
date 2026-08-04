@@ -57,10 +57,10 @@ Un exemple visuel pour mieux comprendre:
 
 Pendant l'installation, ajoute ces composants individuels :
 
-<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/640b628c-7775-48c6-b1f9-501b88d9c5af" />
-
 - **Desktop development with C++**
 - **Windows SDK 10 ou 11** (si t'es casse-couilles sur la version)
+
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/640b628c-7775-48c6-b1f9-501b88d9c5af" />
 
 #### Autres outils nécessaires
 
