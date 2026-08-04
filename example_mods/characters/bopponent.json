@@ -1,0 +1,78 @@
+{
+	"animations": [
+		{
+			"loop": false,
+			"offsets": [
+				6,
+				3
+			],
+			"anim": "idle",
+			"fps": 24,
+			"name": "idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				6,
+				3
+			],
+			"anim": "singLEFT",
+			"fps": 24,
+			"name": "idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				6,
+				3
+			],
+			"anim": "singDOWN",
+			"fps": 24,
+			"name": "idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				6,
+				3
+			],
+			"anim": "singUP",
+			"fps": 24,
+			"name": "idle",
+			"indices": []
+		},
+		{
+			"loop": false,
+			"offsets": [
+				6,
+				3
+			],
+			"anim": "singRIGHT",
+			"fps": 24,
+			"name": "idle",
+			"indices": []
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/bopponent",
+	"position": [
+		750,
+		610
+	],
+	"healthicon": "none",
+	"flip_x": false,
+	"healthbar_colors": [
+		102,
+		255,
+		51
+	],
+	"camera_position": [
+		-260,
+		-120
+	],
+	"sing_duration": 4,
+	"scale": 1
+}

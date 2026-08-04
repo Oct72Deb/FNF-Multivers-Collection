@@ -1,0 +1,122 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				53,
+				7
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT",
+			"indices": [],
+			"name": "Pico Note Right0"
+		},
+		{
+			"offsets": [
+				-64,
+				-5
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT",
+			"indices": [],
+			"name": "Pico NOTE LEFT0"
+		},
+		{
+			"offsets": [
+				-5,
+				28
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singUP",
+			"indices": [],
+			"name": "pico Up note0"
+		},
+		{
+			"offsets": [
+				200,
+				-78
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN",
+			"indices": [],
+			"name": "Pico Down Note0"
+		},
+		{
+			"offsets": [
+				50,
+				5
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singLEFT-alt",
+			"indices": [],
+			"name": "Pico AltNote Right0"
+		},
+		{
+			"loop": false,
+			"offsets": [
+				-3,
+				11
+			],
+			"anim": "singUP-alt",
+			"fps": 24,
+			"name": "pico AltUp note0",
+			"indices": []
+		},
+		{
+			"offsets": [
+				-65,
+				-22
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singRIGHT-alt",
+			"indices": [],
+			"name": "Pico AltNOTE LEFT0"
+		},
+		{
+			"offsets": [
+				-15,
+				-89
+			],
+			"loop": false,
+			"fps": 24,
+			"anim": "singDOWN-alt",
+			"indices": [],
+			"name": "Pico AltDown Note0"
+		},
+		{
+			"loop": true,
+			"offsets": [
+				0,
+				0
+			],
+			"anim": "idle",
+			"fps": 24,
+			"name": "Pico Idle Dance",
+			"indices": []
+		}
+	],
+	"no_antialiasing": false,
+	"image": "characters/gangsta/corruptmario",
+	"position": [
+		20,
+		310
+	],
+	"healthicon": "gangstacorrupt",
+	"flip_x": true,
+	"healthbar_colors": [
+		40,
+		0,
+		40
+	],
+	"camera_position": [
+		-70,
+		60
+	],
+	"sing_duration": 6.1,
+	"scale": 1
+}

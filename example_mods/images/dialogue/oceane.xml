@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="oceane.png">
+	<!-- Created using the Spritesheet and XML generator -->
+	<!-- https://uncertainprod.github.io/FNF-Spritesheet-XML-generator-Web -->
+	<SubTexture name="embarrassed0000" x="0" y="0" width="800" height="808" frameX="-34" frameY="2" frameWidth="887" frameHeight="804"/>
+	<SubTexture name="excited0000" x="800" y="0" width="786" height="799" frameX="-32" frameY="-7" frameWidth="887" frameHeight="804"/>
+</TextureAtlas>

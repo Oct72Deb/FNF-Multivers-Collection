@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<TextureAtlas imagePath="markiplier.png">
+<SubTexture name="markiplier idle0000" x="914" y="636" width="454" height="629" frameX="-78" frameY="-93" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0001" x="914" y="636" width="454" height="629" frameX="-78" frameY="-93" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0002" x="1370" y="0" width="457" height="627" frameX="-80" frameY="-94" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0003" x="1370" y="0" width="457" height="627" frameX="-80" frameY="-94" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0004" x="0" y="636" width="457" height="631" frameX="-80" frameY="-90" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0005" x="457" y="636" width="457" height="631" frameX="-80" frameY="-90" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0006" x="0" y="0" width="457" height="636" frameX="-79" frameY="-86" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0007" x="457" y="0" width="457" height="636" frameX="-79" frameY="-86" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0008" x="914" y="0" width="456" height="634" frameX="-78" frameY="-85" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0009" x="914" y="0" width="456" height="634" frameX="-78" frameY="-85" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0010" x="914" y="0" width="456" height="634" frameX="-78" frameY="-85" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0011" x="914" y="0" width="456" height="634" frameX="-78" frameY="-85" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0012" x="914" y="0" width="456" height="634" frameX="-78" frameY="-85" frameWidth="647" frameHeight="761" />
+<SubTexture name="markiplier idle0013" x="914" y="0" width="456" height="634" frameX="-78" frameY="-85" frameWidth="647" frameHeight="761" />
+</TextureAtlas>
