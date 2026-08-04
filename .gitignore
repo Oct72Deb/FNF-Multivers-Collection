@@ -2,3 +2,9 @@
 # existe quand même sur GitHub (Git ne suit jamais les dossiers vides).
 export/*
 !export/here.txt
+
+.local_version.txt
+
+# Fichier perso a pas intégré dans github
+*.ink
+PushSrc.bat
