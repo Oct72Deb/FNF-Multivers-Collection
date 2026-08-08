@@ -6,5 +6,5 @@ export/*
 .local_version.txt
 
 # Fichier perso a pas intégré dans github
-*.ink
+*.Ink
 PushSrc.bat

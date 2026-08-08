@@ -12,6 +12,7 @@ import flixel.math.FlxMath;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import Paths;
 import PlayState;
+import Conductor;
 
 class ArtworkSubstate extends FlxSubState {
     
@@ -70,7 +71,7 @@ class ArtworkSubstate extends FlxSubState {
         persistentDraw = true;
     }
 
-    var artworks:Array<{path:String, text:String, desc:String, difficulties:Array<Int>, diffLabels:Array<String>, difficultyArtworks:Map<String, String>, difficultyTexts:Map<String, String>, difficultyDescs:Map<String, String>}> =
+    static var artworks:Array<{path:String, text:String, desc:String, difficulties:Array<Int>, diffLabels:Array<String>, difficultyArtworks:Map<String, String>, difficultyTexts:Map<String, String>, difficultyDescs:Map<String, String>, ?difficultyValues:Map<String, Int>}> =
     [
 
         {   path: "artworks/placeholder",        text: "???",
@@ -128,7 +129,10 @@ class ArtworkSubstate extends FlxSubState {
             difficulties: [6,10,15],         diffLabels: ["Easy", "Normal", "Hard", "Pico-mix", "B-side", "Corruption", "Minus", "In-game-version", "In-game-mix"],
             difficultyArtworks: ["erect" => "artworks/epicrap", "nightmare" => "artworks/epicrap", "in-game-version" => "artworks/SilvaGunner_Banner_igv", "in-game-mix" => "artworks/SilvaGunner_Banner_igm", "corruption" => "artworks/SilvaGunner_Banner_corruption"],
             difficultyTexts:    ["erect" => "Version Erect !"],
-            difficultyDescs:    ["erect" => "BPM: 180 / VS Gangsta Mario (Erect)"], },
+            difficultyDescs:    ["erect" => "BPM: 180 / VS Gangsta Mario (Erect)"],
+            // TODO: valeurs a ajuster selon le vrai ressenti de diff de chaque variante (prototype)
+            difficultyValues:   ["erect" => 18, "nightmare" => 20, "pico-mix" => 12, "b-side" => 14,
+                                  "corruption" => 16, "minus" => 8, "in-game-version" => 10, "in-game-mix" => 11], },
 
         {   path: "artworks/new_game",           text: "Mario get you next time!",
             desc: "BPM: 145 / VS. Super Horror Mario",
@@ -148,11 +152,11 @@ class ArtworkSubstate extends FlxSubState {
 
         barMaxWidth = Std.int(bg.width - 120);
 
-        barBg = new FlxSprite(bg.x + 60, 115)
+        barBg = new FlxSprite(bg.x + 45, 100)
             .makeGraphic(barMaxWidth, 20, FlxColor.fromRGB(40, 40, 40));
         add(barBg);
 
-        barFill = new FlxSprite(bg.x + 60, 115)
+        barFill = new FlxSprite(bg.x + 45, 100)
             .makeGraphic(1, 20, FlxColor.GREEN);
         add(barFill);
 
@@ -237,13 +241,11 @@ class ArtworkSubstate extends FlxSubState {
                 cb.daValue = v;
                 setCheckboxVisual(cb, v);
                 cb.updateHitbox();
-                try {
-                    var lbl:FlxText = labelGroup.members[idx];
-                    if (lbl != null) {
-                        lbl.x = cb.x + (cb.width * cb.scale.x) + 8;
-                        lbl.y = cb.y + (cb.height * cb.scale.y - lbl.size) / 2;
-                    }
-                } catch(e:Dynamic) {}
+                var lbl:FlxText = labelGroup.members[idx];
+                if (lbl != null) {
+                    lbl.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
+                    lbl.y = cb.y + (cb.height * cb.scale.y - lbl.size) / 2 + labelOffsetY;
+                }
             }
         }
     }
@@ -257,7 +259,7 @@ public function updateArtworkForSong(songName:String):Void {
         case "crash out": 4;
         case "trick or treat": 5;
         case "trick or treat old": 6;
-        case "shrinkdown": 7;
+        case "periple": 7;
         case "starlight": 8;
         case "allocution": 9;
         case "gangstabattle": 10;
@@ -334,12 +336,19 @@ public function updateArtworkForSong(songName:String):Void {
 
     var isAnimating:Bool = false;
     var startX:Float = 0;
+    var barLastFillWidth:Int = -1; // cache pour eviter de regenerer le graphic inutilement
+
+    // ---------- BEAT-SYNC (bop de l'artwork sur la musique) ----------
+    var baseArtScale:Float = 0.33;   // scale de repos de l'artwork (repris de showArtwork)
+    var lastBeat:Int = -1;           // dernier beat detecte, evite de re-trigger plusieurs fois
+    var bopStrength:Float = 0.06;    // amplitude du "pop" sur le beat (0.12 = +12%)
+    var bopEaseSpeed:Float = 0.20;   // vitesse de retour au scale normal (plus haut = plus rapide)
 
     public function showArtwork(index:Int):Void {
         var a = artworks[index];
         var path = getArtworkPath(index); // Utilise l'artwork de la difficulté si disponible
         artImage.loadGraphic(Paths.image(path));
-        artImage.scale.set(0.33, 0.33);
+        artImage.scale.set(baseArtScale, baseArtScale);
         artImage.updateHitbox();
         artImage.screenCenter();
         artImage.x += 400;
@@ -357,9 +366,19 @@ public function updateArtworkForSong(songName:String):Void {
 
     public function updateDifficultyBar():Void {
         var a = artworks[curIndex];
-        var rawValue:Float = (a != null && a.difficulties != null && a.difficulties.length > currentDifficulty)
-            ? a.difficulties[currentDifficulty]
-            : 0;
+        var rawValue:Float = 0;
+
+        if (a != null) {
+            // Priorite a la valeur nommee (diffs "bonus" type erect/corruption/etc.)
+            if (a.difficultyValues != null && a.difficultyValues.exists(currentDifficultyName)) {
+                rawValue = a.difficultyValues.get(currentDifficultyName);
+            }
+            // Sinon fallback sur l'array de base (Easy/Normal/Hard)
+            else if (a.difficulties != null && a.difficulties.length > currentDifficulty) {
+                rawValue = a.difficulties[currentDifficulty];
+            }
+        }
+
         barTargetPercent = Math.max(0, Math.min(rawValue / 20, 1));
     }
 
@@ -407,14 +426,35 @@ public function updateArtworkForSong(songName:String):Void {
         }
 
         // Animation barre de difficulte (ease-out)
-        barCurrentPercent = barCurrentPercent + (barTargetPercent - barCurrentPercent) * (1 - Math.pow(0.0001, elapsed));
+        if (Math.abs(barTargetPercent - barCurrentPercent) > 0.0005) {
+            barCurrentPercent += (barTargetPercent - barCurrentPercent) * (1 - Math.pow(0.0001, elapsed));
+        } else if (barCurrentPercent != barTargetPercent) {
+            barCurrentPercent = barTargetPercent; // snap final, sinon on n'atteint jamais exactement la cible
+        }
+
         var fillWidth:Int = Std.int(barMaxWidth * barCurrentPercent);
         if (fillWidth < 1) fillWidth = 1;
-        barFill.makeGraphic(fillWidth, 20, getBarColor(barCurrentPercent));
+
+        // On ne regenere le bitmap que si sa largeur a reellement change (evite le makeGraphic() a chaque frame)
+        if (fillWidth != barLastFillWidth) {
+            barFill.makeGraphic(fillWidth, 20, getBarColor(barCurrentPercent));
+            barLastFillWidth = fillWidth;
+        }
+
+        // ---------- Bop de l'artwork sur le beat de la musique ----------
+        if (Conductor.crochet > 0) {
+            var curBeat:Int = Math.floor(Conductor.songPosition / Conductor.crochet);
+            if (curBeat != lastBeat) {
+                lastBeat = curBeat;
+                artImage.scale.set(baseArtScale * (1 + bopStrength), baseArtScale * (1 + bopStrength));
+            }
+        }
+
+        // Retour progressif vers la taille normale (ease-out), independant du beat
+        artImage.scale.x = FlxMath.lerp(artImage.scale.x, baseArtScale, bopEaseSpeed);
+        artImage.scale.y = FlxMath.lerp(artImage.scale.y, baseArtScale, bopEaseSpeed);
 
         // LEFT/RIGHT supprimes ici — FreeplayState appelle setDifficulty() a la place
-
-        for (cb in checkboxGroup) cb.updateHitbox();
 
         var mouseScreen = FlxG.mouse.getScreenPosition();
         var mx = mouseScreen.x, my = mouseScreen.y;
@@ -423,21 +463,16 @@ public function updateArtworkForSong(songName:String):Void {
         var justR = FlxG.mouse.justReleased;
         var pressed = FlxG.mouse.pressed;
 
-        var clickedThisFrame:Bool = justP || justR;
-
         var changed:Bool = false;
         for (i in 0...checkboxGroup.members.length) {
             var cb:CheckboxThingie = checkboxGroup.members[i];
             if (cb == null) continue;
 
-            var hover:Bool = false;
-            try { hover = cb.overlapsPoint(mouseScreen); } catch(e:Dynamic) { hover = false; }
+            var hover:Bool = cb.overlapsPoint(mouseScreen);
             if (!hover) hover = isMouseInExpandedRect(cb, mx, my, clickMargin);
 
-            try {
-                var lbl:FlxText = labelGroup.members[i];
-                if (lbl != null) hover = hover || lbl.overlapsPoint(mouseScreen);
-            } catch(e:Dynamic) {}
+            var lbl:FlxText = labelGroup.members[i];
+            if (lbl != null) hover = hover || lbl.overlapsPoint(mouseScreen);
 
             if (justP && hover) {
                 if (checkboxPractice == cb) _pressingPractice = true;
@@ -451,13 +486,11 @@ public function updateArtworkForSong(songName:String):Void {
                     cb.daValue = newVal;
                     setCheckboxVisual(cb, newVal);
                     cb.updateHitbox();
-                    try {
-                        var lbl2:FlxText = labelGroup.members[i];
-                        if (lbl2 != null) {
-                            lbl2.x = cb.x + (cb.width * cb.scale.x) + 8;
-                            lbl2.y = cb.y + (cb.height * cb.scale.y - lbl2.size) / 2;
-                        }
-                    } catch(e:Dynamic) {}
+                    var lbl2:FlxText = labelGroup.members[i];
+                    if (lbl2 != null) {
+                        lbl2.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
+                        lbl2.y = cb.y + (cb.height * cb.scale.y - lbl2.size) / 2 + labelOffsetY;
+                    }
                     changed = true;
                     if (checkboxPractice == cb) _pressingPractice = false;
                     if (checkboxBot == cb) _pressingBot = false;
@@ -476,13 +509,11 @@ public function updateArtworkForSong(songName:String):Void {
                             cb.daValue = newValP;
                             setCheckboxVisual(cb, newValP);
                             cb.updateHitbox();
-                            try {
-                                var lblp:FlxText = labelGroup.members[i];
-                                if (lblp != null) {
-                                    lblp.x = cb.x + (cb.width * cb.scale.x) + 8;
-                                    lblp.y = cb.y + (cb.height * cb.scale.y - lblp.size) / 2;
-                                }
-                            } catch(e:Dynamic) {}
+                            var lblp:FlxText = labelGroup.members[i];
+                            if (lblp != null) {
+                                lblp.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
+                                lblp.y = cb.y + (cb.height * cb.scale.y - lblp.size) / 2 + labelOffsetY;
+                            }
                             changed = true;
                         }
                     }
@@ -500,13 +531,11 @@ public function updateArtworkForSong(songName:String):Void {
                             cb.daValue = newValB;
                             setCheckboxVisual(cb, newValB);
                             cb.updateHitbox();
-                            try {
-                                var lblb:FlxText = labelGroup.members[i];
-                                if (lblb != null) {
-                                    lblb.x = cb.x + (cb.width * cb.scale.x) + 8;
-                                    lblb.y = cb.y + (cb.height * cb.scale.y - lblb.size) / 2;
-                                }
-                            } catch(e:Dynamic) {}
+                            var lblb:FlxText = labelGroup.members[i];
+                            if (lblb != null) {
+                                lblb.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
+                                lblb.y = cb.y + (cb.height * cb.scale.y - lblb.size) / 2 + labelOffsetY;
+                            }
                             changed = true;
                         }
                     }
@@ -515,26 +544,14 @@ public function updateArtworkForSong(songName:String):Void {
             }
         }
 
-        for (i in 0...checkboxGroup.members.length) {
-            var cbk = checkboxGroup.members[i];
-            var lbk = labelGroup.members[i];
-            if (cbk != null && lbk != null) {
-                lbk.x = cbk.x + (cbk.width * cbk.scale.x) + labelOffsetX;
-                lbk.y = cbk.y + (cbk.height * cbk.scale.y - lbk.size) / 2 + labelOffsetY;
-            }
-        }
-
         if (!changed && (FlxG.keys.justPressed.Z || FlxG.keys.justPressed.SPACE || FlxG.keys.justPressed.ENTER)) {
             for (i in 0...checkboxGroup.members.length) {
                 var cbk:CheckboxThingie = checkboxGroup.members[i];
                 if (cbk == null) continue;
-                var hoverK:Bool = false;
-                try { hoverK = cbk.overlapsPoint(mouseScreen); } catch(e:Dynamic) { hoverK = false; }
+                var hoverK:Bool = cbk.overlapsPoint(mouseScreen);
                 if (!hoverK) hoverK = isMouseInExpandedRect(cbk, mx, my, clickMargin);
-                try {
-                    var lblK:FlxText = labelGroup.members[i];
-                    if (lblK != null) hoverK = hoverK || lblK.overlapsPoint(mouseScreen);
-                } catch(e:Dynamic) {}
+                var lblK:FlxText = labelGroup.members[i];
+                if (lblK != null) hoverK = hoverK || lblK.overlapsPoint(mouseScreen);
                 if (hoverK) {
                     var optK = optionsArray[i];
                     if (optK != null) {

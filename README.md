@@ -13,6 +13,10 @@ Le build a été modifié et réorganisé pour le développement du moteur.
 ### Modifications principales
 
 - Rangement des fichiers sources `.hx` dans des dossiers *(comme sur la 0.7)*.
+
+<img width="1360" height="814" alt="image" src="https://github.com/user-attachments/assets/47042fc5-82a9-472a-930f-1a4b2e3962b3" />
+
+
 - Correction d'un gros bug de **shader** survenant lors de l'utilisation de scripts **Lua** pour changer les couleurs du stage, du background, de la barre de vie, etc.
 - Suppression de plusieurs défauts de FNF que l'équipe n'aimait pas.
 
@@ -43,28 +47,34 @@ Il te faudra plusieurs outils installés sur ta machine pour modifier et compile
 Compiler, en gros, ça veut dire transformer le code que tu as écrit en une version lisible par ton PC.
 Le code est traduit en langage binaire pour pouvoir être exécuté sur ta machine.
 
+Un exemple visuel pour mieux comprendre:
+
+<img width="1589" height="669" alt="Compiler-2" src="https://github.com/user-attachments/assets/947c6ad0-4afa-4b07-be16-f8623f79f24d" />
+
 ### Outils requis (version 0.6.3)
 
-#### Visual Studio 2022
+#### Visual Studio 2026/19 "Minimum"
 
 Pendant l'installation, ajoute ces composants individuels :
 
 - **Desktop development with C++**
 - **Windows SDK 10 ou 11** (si t'es casse-couilles sur la version)
 
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/640b628c-7775-48c6-b1f9-501b88d9c5af" />
+
 #### Autres outils nécessaires
 
 - **Haxe** — version **4.2.5** exactement *(ne prends pas une version plus récente, j'insiste là-dessus)*
 - **Git**
 - **Visual Studio Code** ou un autre IDE de ton choix
-- Utilise **FNF Tools.bat** pour l'installation automatique des dépendances (haxelibs, etc.)
+- Utilise **Install-FNF-Tools.bat** pour l'installation automatique des dépendances (haxelibs, etc.)
 
 ### Étapes rapides
 
 ```bash
 git clone <url-du-repo>
-cd nom-du-dossier
-FNF-Tools.bat
+cd nom-du-dossier/setup
+Install-FNF-Tools.bat
 ```
 
 Une fois les dépendances installées via le `.bat`, tu peux ouvrir le projet dans ton IDE et compiler directement.

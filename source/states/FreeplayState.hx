@@ -80,10 +80,10 @@ class FreeplayState extends MusicBeatState
 	// Ex : "Periple" -> data/periple/ -> clé 'periple' -> HellBG
 	// ==============================================
 	static var hardcodedBackgrounds:Map<String, String> = [
-		'periple' => 'freeplayBG/allocution',
+		'periple' => 'freeplayBG/defaultBG',
 		'starlight' => 'freeplayBG/defaultBG',
-		'allocution' => 'freeplayBG/how_to_play',
-		'new-game' => 'freeplayBG/new_game',
+		'allocution' => 'freeplayBG/allocution',
+		'new_game' => 'freeplayBG/new_game',
 		// 'nom-de-la-chanson' => 'NomDuFond',
 	];
 
@@ -119,14 +119,20 @@ for (i in 0...WeekData.weeksList.length) {
 			if(weekIsLocked(WeekData.weeksList[i])) continue;
 
 			// --- Condition custom pour "weekb" ---
-			if(WeekData.weeksList[i] == WeekbUnlock.HIDDEN_WEEK_NAME)
+						if(WeekData.weeksList[i] == WeekbUnlock.HIDDEN_WEEK_NAME)
 			{
-				var diffCount:Int = CoolUtil.defaultDifficulties.length;
+				var savedDifficulties:Array<String> = CoolUtil.difficulties; // sauvegarde l'état courant
+
 				if(WeekData.weeksLoaded.exists("weeka"))
 				{
-					diffCount = getDifficultyCountForWeek(WeekData.weeksLoaded.get("weeka"));
+					CoolUtil.difficulties = getDifficultiesForWeek(WeekData.weeksLoaded.get("weeka"));
 				}
-				if(!WeekbUnlock.isUnlocked(diffCount)) continue;
+
+				var unlocked:Bool = WeekbUnlock.isUnlocked(CoolUtil.difficulties.length);
+
+				CoolUtil.difficulties = savedDifficulties; // restaure l'état d'origine
+
+				if(!unlocked) continue;
 			}
 			// --- Fin condition custom ---
 
@@ -251,7 +257,7 @@ for (i in 0...WeekData.weeksList.length) {
 		scoreText.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, RIGHT);
 
 		scoreBG = new FlxSprite(scoreText.x - 6, 0).makeGraphic(1, 66, 0xFF000000);
-		scoreBG.alpha = 0.6;
+		scoreBG.alpha = 0.0;
 		add(scoreBG);
 
 		diffText = new FlxText(scoreText.x, scoreText.y + 36, 0, "", 24);
@@ -655,7 +661,7 @@ for (i in 0...WeekData.weeksList.length) {
 				stepsToDo = 0;
 			}
 
-			if (subState != null && Std.is(subState, ArtworkSubstate)) {
+			if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 				var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
 				artSub.updateArtworkForSong(songs[curSelected].songName);
 			}
@@ -715,37 +721,38 @@ for (i in 0...WeekData.weeksList.length) {
 
 	// Notifie ArtworkSubstate du changement de difficulte
 	function notifyArtworkDifficulty():Void {
-		if (subState != null && Std.is(subState, ArtworkSubstate)) {
+		if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 			var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
 			artSub.setDifficulty(curDifficulty);
 		}
 	}
 // Reproduit la logique de parsing de "difficulties" utilisée dans changeSelection(),
 	// pour compter le nombre de difficultés propres à une week donnée (ici "weeka").
-	function getDifficultyCountForWeek(week:WeekData):Int
+function getDifficultiesForWeek(week:WeekData):Array<String>
 	{
+		var diffs:Array<String> = CoolUtil.defaultDifficulties.copy();
 		var diffStr:String = week.difficulties;
 		if(diffStr != null) diffStr = diffStr.trim();
 
 		if(diffStr != null && diffStr.length > 0)
 		{
-			var diffs:Array<String> = diffStr.split(',');
-			var i:Int = diffs.length - 1;
+			var parsed:Array<String> = diffStr.split(',');
+			var i:Int = parsed.length - 1;
 			while (i > 0)
 			{
-				if(diffs[i] != null)
+				if(parsed[i] != null)
 				{
-					diffs[i] = diffs[i].trim();
-					if(diffs[i].length < 1) diffs.remove(diffs[i]);
+					parsed[i] = parsed[i].trim();
+					if(parsed[i].length < 1) parsed.remove(parsed[i]);
 				}
 				--i;
 			}
 
-			if(diffs.length > 0 && diffs[0].length > 0)
-				return diffs.length;
+			if(parsed.length > 0 && parsed[0].length > 0)
+				diffs = parsed;
 		}
 
-		return CoolUtil.defaultDifficulties.length;
+		return diffs;
 	}
 
 	function changeDiff(change:Int = 0)
