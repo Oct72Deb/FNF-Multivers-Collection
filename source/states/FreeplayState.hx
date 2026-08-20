@@ -91,7 +91,7 @@ class FreeplayState extends MusicBeatState
 		'periple' => 'freeplayBG/defaultBG',
 		'starlight' => 'freeplayBG/defaultBG',
 		'allocution' => 'freeplayBG/allocution',
-		'new_game' => 'freeplayBG/new_game',
+		'new-game' => 'freeplayBG/new_game',
 		// 'nom-de-la-chanson' => 'NomDuFond',
 	];
 
