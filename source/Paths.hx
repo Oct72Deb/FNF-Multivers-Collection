@@ -157,6 +157,21 @@ class Paths
 		return 'assets/$file';
 	}
 
+inline static public function resolveDiffSuffix(song:String, prefix:String, diffSuffix:String):String
+{
+	if (diffSuffix != '' && !fileExists('songs/${formatToSongPath(song)}/$prefix$diffSuffix.$SOUND_EXT', SOUND))
+		return '';
+	return diffSuffix;
+}
+
+inline static public function songDiffSuffix(songData:Dynamic, fallbackDiffIndex:Int):String
+{
+	var audioDiffOverride:String = (songData != null) ? Reflect.field(songData, 'audioDifficulty') : null;
+	if (audioDiffOverride != null && audioDiffOverride.length > 0)
+		return formatToSongPath('-' + audioDiffOverride);
+	return CoolUtil.getDifficultyFilePath(fallbackDiffIndex);
+}
+
 	inline static public function file(file:String, type:AssetType = TEXT, ?library:String)
 	{
 		return getPath(file, type, library);
@@ -201,6 +216,34 @@ class Paths
 		return 'assets/videos/$key.$VIDEO_EXT';
 	}
 
+	/**
+	 * Force la lecture du fichier vidéo à l'avance, pour que l'OS le mette en cache RAM.
+	 * Ça ne "joue" rien, ça sert juste à éviter que le disque soit lu au moment critique
+	 * où la vidéo doit démarrer (ce qui cause le délai de chargement).
+	 * À appeler le plus tôt possible, bien avant playVideo().
+	 */
+	static public function preloadVideo(key:String):Void
+	{
+		#if sys
+		var path:String = video(key);
+		if (FileSystem.exists(path))
+		{
+			try
+			{
+				File.getBytes(path);
+			}
+			catch (e:Dynamic)
+			{
+				trace('Erreur en préchargeant la vidéo $key: $e');
+			}
+		}
+		else
+		{
+			trace('preloadVideo: fichier introuvable pour $key');
+		}
+		#end
+	}
+
 	static public function sound(key:String, ?library:String):Sound
 	{
 		var sound:Sound = returnSound('sounds', key, library);
@@ -218,19 +261,21 @@ class Paths
 		return file;
 	}
 
-	inline static public function voices(song:String):Any
-	{
-		var songKey:String = '${formatToSongPath(song)}/Voices';
-		var voices = returnSound('songs', songKey);
-		return voices;
-	}
+inline static public function voices(song:String, ?diffSuffix:String = ''):Any
+{
+	var actualSuffix:String = resolveDiffSuffix(song, 'Voices', diffSuffix);
+	var songKey:String = '${formatToSongPath(song)}/Voices' + actualSuffix;
+	var voices = returnSound('songs', songKey);
+	return voices;
+}
 
-	inline static public function inst(song:String):Any
-	{
-		var songKey:String = '${formatToSongPath(song)}/Inst';
-		var inst = returnSound('songs', songKey);
-		return inst;
-	}
+inline static public function inst(song:String, ?diffSuffix:String = ''):Any
+{
+	var actualSuffix:String = resolveDiffSuffix(song, 'Inst', diffSuffix);
+	var songKey:String = '${formatToSongPath(song)}/Inst' + actualSuffix;
+	var inst = returnSound('songs', songKey);
+	return inst;
+}
 
 	inline static public function image(key:String, ?library:String):FlxGraphic
 	{

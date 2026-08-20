@@ -146,6 +146,8 @@ class ChartingState extends MusicBeatState
 	var curUndoIndex = 0;
 	var curRedoIndex = 0;
 	var _song:SwagSong;
+	// Difficultés valides pour events.json (chargées depuis le JSON si présent, sinon défaut à la sauvegarde)
+	var curEventsValidDifficulties:Array<String> = null;
 	/*
 	 * WILL BE THE CURRENT / LAST PLACED NOTE
 	**/
@@ -461,6 +463,7 @@ class ChartingState extends MusicBeatState
 				clearEvents();
 				var events:SwagSong = Song.loadFromJson('events', songName);
 				_song.events = events.events;
+				curEventsValidDifficulties = Reflect.field(events, 'validDifficulties');
 				changeSection(curSec);
 			}
 		});
@@ -1359,7 +1362,7 @@ class ChartingState extends MusicBeatState
 			// vocals.stop();
 		}
 
-		var file:Dynamic = Paths.voices(currentSongName);
+		var file:Dynamic = Paths.voices(currentSongName, CoolUtil.getDifficultyFilePath());
 		vocals = new FlxSound();
 		if (Std.isOfType(file, Sound) || OpenFlAssets.exists(file)) {
 			vocals.loadEmbedded(file);
@@ -1372,7 +1375,7 @@ class ChartingState extends MusicBeatState
 	}
 
 	function generateSong() {
-		FlxG.sound.playMusic(Paths.inst(currentSongName), 0.6/*, false*/);
+		FlxG.sound.playMusic(Paths.inst(currentSongName, CoolUtil.getDifficultyFilePath()), 0.6/*, false*/);
 		if (instVolume != null) FlxG.sound.music.volume = instVolume.value;
 		if (check_mute_inst != null && check_mute_inst.checked) FlxG.sound.music.volume = 0;
 
@@ -2976,27 +2979,28 @@ class ChartingState extends MusicBeatState
 
 	function clearEvents() {
 		_song.events = [];
+		curEventsValidDifficulties = null;
 		updateGrid();
 	}
 
-	private function saveLevel()
+private function saveLevel()
+{
+	if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
+	var json = {
+		"song": _song
+	};
+
+	var data:String = Json.stringify(json, "\t");
+
+	if ((data != null) && (data.length > 0))
 	{
-		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
-		var json = {
-			"song": _song
-		};
-
-		var data:String = Json.stringify(json, "\t");
-
-		if ((data != null) && (data.length > 0))
-		{
-			_file = new FileReference();
-			_file.addEventListener(Event.COMPLETE, onSaveComplete);
-			_file.addEventListener(Event.CANCEL, onSaveCancel);
-			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
-			_file.save(data.trim(), Paths.formatToSongPath(_song.song) + ".json");
-		}
+		_file = new FileReference();
+		_file.addEventListener(Event.COMPLETE, onSaveComplete);
+		_file.addEventListener(Event.CANCEL, onSaveCancel);
+		_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
+		_file.save(data.trim(), Paths.formatToSongPath(_song.song) + CoolUtil.getDifficultyFilePath() + ".json");
 	}
+}
 
 	function sortByTime(Obj1:Array<Dynamic>, Obj2:Array<Dynamic>):Int
 	{
@@ -3006,8 +3010,15 @@ class ChartingState extends MusicBeatState
 	private function saveEvents()
 	{
 		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
+
+		// Si aucune liste n'a été chargée/définie, on applique par défaut Easy/Normal/Hard.
+		// Modifiable ensuite à la main dans le JSON pour cibler d'autres difficultés.
+		if (curEventsValidDifficulties == null)
+			curEventsValidDifficulties = ["easy", "normal", "hard"];
+
 		var eventsSong:Dynamic = {
-			events: _song.events
+			events: _song.events,
+			validDifficulties: curEventsValidDifficulties
 		};
 		var json = {
 			"song": eventsSong

@@ -6,7 +6,6 @@ import Discord.DiscordClient;
 
 import substates.ArtworkSubstate;
 import substates.GameplayChangersSubstate;
-import substates.ResetScoreSubState;
 
 import PlayState;
 import editors.ChartingState;
@@ -24,6 +23,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import lime.utils.Assets;
 import flixel.system.FlxSound;
+import flixel.input.keyboard.FlxKey;
 import openfl.utils.Assets as OpenFlAssets;
 import sys.thread.Thread;
 import WeekData;
@@ -46,6 +46,9 @@ class FreeplayState extends MusicBeatState
 	var scoreBG:FlxSprite;
 	var scoreText:FlxText;
 	var diffText:FlxText;
+	var cheatHintText:FlxText;
+	static inline var CHEAT_HINT_MESSAGE:String = 'Type "victoire" on your keyboard to reset the score.';
+	static inline var CHEAT_SUCCESS_MESSAGE:String = 'Reset completed successfully.';
 	var lerpScore:Int = 0;
 	var lerpRating:Float = 0;
 	var intendedScore:Int = 0;
@@ -55,6 +58,11 @@ class FreeplayState extends MusicBeatState
 	private var curPlaying:Bool = false;
 
 	private var iconArray:Array<HealthIcon> = [];
+
+	// --- Cheat code pour reset le score (remplace l'ancien sous-menu de confirmation) ---
+	var cheatBuffer:String = "";
+	static inline var CHEAT_RESET_CODE:String = "victoire";
+	// -----------------------------------------------------------------------------------
 
 	var bg:FlxSprite;
 	var intendedColor:Int;
@@ -265,6 +273,15 @@ for (i in 0...WeekData.weeksList.length) {
 		add(diffText);
 
 		add(scoreText);
+
+		// --- Message d'astuce pour le cheat code de reset (bas droite) ---
+		cheatHintText = new FlxText(0, 0, 300, CHEAT_HINT_MESSAGE, 16);
+		cheatHintText.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT);
+		cheatHintText.scrollFactor.set();
+		cheatHintText.x = FlxG.width - cheatHintText.width - 10;
+		cheatHintText.y = FlxG.height - cheatHintText.height - 10;
+		add(cheatHintText);
+		// -------------------------------------------------------------
 
 		if(curSelected >= songs.length) curSelected = 0;
 
@@ -526,6 +543,8 @@ for (i in 0...WeekData.weeksList.length) {
 
 	override function update(elapsed:Float)
 	{
+		checkResetCheatCode();
+
 		if (FlxG.sound.music.volume < 0.7)
 		{
 			FlxG.sound.music.volume += 0.5 * FlxG.elapsed;
@@ -610,56 +629,51 @@ for (i in 0...WeekData.weeksList.length) {
 			FlxG.sound.playMusic(Paths.music('freakymenu'), 0.5);
 		}
 
-		if (instPlaying != curSelected || diffPlaying != curDifficulty)
-		{
-			var baseSongKey:String = Paths.formatToSongPath(songs[curSelected].songName);
-			var diffFormattedName:String = Highscore.formatSong(baseSongKey, curDifficulty);
+if (instPlaying != curSelected || diffPlaying != curDifficulty)
+{
+	var baseSongKey:String = Paths.formatToSongPath(songs[curSelected].songName);
+	var diffFormattedName:String = Highscore.formatSong(baseSongKey, curDifficulty);
 
-			var targetTrack:String = baseSongKey;
-			var loadedSong:Dynamic = null; // On garde le chart chargé pour éviter de le recharger 2x
+	var targetTrack:String = baseSongKey;
+	var loadedSong:Dynamic = null;
 
-			try {
-				loadedSong = Song.loadFromJson(diffFormattedName, baseSongKey);
-				if (loadedSong != null && loadedSong.song != null) {
-					targetTrack = Paths.formatToSongPath(loadedSong.song);
-				}
-			} catch(e:Dynamic) {
-				// En cas d'erreur, on reste sur le morceau de base
-				loadedSong = null;
-			}
+	try {
+		loadedSong = Song.loadFromJson(diffFormattedName, baseSongKey);
+		if (loadedSong != null && loadedSong.song != null) {
+			targetTrack = Paths.formatToSongPath(loadedSong.song);
+		}
+	} catch(e:Dynamic) {
+		loadedSong = null;
+	}
 
-			if (targetTrack != instNamePlaying)
-			{
-				FlxG.sound.music.volume = 0;
-				FlxG.sound.playMusic(Paths.inst(targetTrack), 0);
-				instNamePlaying = targetTrack;
+var diffSuffix:String = Paths.songDiffSuffix(loadedSong, curDifficulty);
+var actualInstSuffix:String = Paths.resolveDiffSuffix(targetTrack, 'Inst', diffSuffix);
+var trackKey:String = targetTrack + actualInstSuffix; // clé basée sur le fichier RÉELLEMENT joué
 
-				if (targetTrack == "new game" || targetTrack == "new-game")
-					FlxG.sound.music.time = 23170;
-				if (targetTrack == "metal reflection" || targetTrack == "metal-reflection")
-					FlxG.sound.music.time = 7500;
+if (trackKey != instNamePlaying)
+{
+	FlxG.sound.music.volume = 0;
+	FlxG.sound.playMusic(Paths.inst(targetTrack, diffSuffix), 0);
+	instNamePlaying = trackKey;
 
-				var bpm:Int = (loadedSong != null) ? Std.int(loadedSong.bpm) : 120;
-				PlayState.SONG = loadedSong != null ? loadedSong : cast { song: targetTrack, notes: [], bpm: bpm };
+		if (targetTrack == "new game" || targetTrack == "new-game")
+			FlxG.sound.music.time = 23170;
+		if (targetTrack == "metal reflection" || targetTrack == "metal-reflection")
+			FlxG.sound.music.time = 7500;
 
-				// ✅ changeBPM ne suffit pas : il faut aussi remapper les sections
-				// (sinon sectionHit() peut se baser sur la table de l'ancienne chanson,
-				// d'où le "boop" instable)
-				Conductor.changeBPM(bpm);
-				Conductor.mapBPMChanges(PlayState.SONG);
+		var bpm:Int = (loadedSong != null) ? Std.int(loadedSong.bpm) : 120;
+		PlayState.SONG = loadedSong != null ? loadedSong : cast { song: targetTrack, notes: [], bpm: bpm };
 
-				// ✅ Le VRAI bug : ces compteurs sont hérités de MusicBeatState et ne sont
-				// JAMAIS remis à zéro entre deux chansons en freeplay (contrairement au
-				// PlayState, qui recrée un état neuf à chaque chanson). Sans ce reset,
-				// curSection garde la valeur de l'ancienne chanson, et sectionHit() ne se
-				// redéclenche que si curSection dépasse cette ancienne valeur.
-				curStep = 0;
-				curBeat = 0;
-				curDecStep = 0;
-				curDecBeat = 0;
-				curSection = 0;
-				stepsToDo = 0;
-			}
+		Conductor.changeBPM(bpm);
+		Conductor.mapBPMChanges(PlayState.SONG);
+
+		curStep = 0;
+		curBeat = 0;
+		curDecStep = 0;
+		curDecBeat = 0;
+		curSection = 0;
+		stepsToDo = 0;
+	}
 
 			if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 				var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
@@ -694,12 +708,7 @@ for (i in 0...WeekData.weeksList.length) {
 			destroyFreeplayVocals();
 		}
 		// --- TON CODE AJOUTÉ ICI ---
-		else if (controls.RESET)
-		{
-			persistentUpdate = false;
-			openSubState(new ResetScoreSubState(songs[curSelected].songName, curDifficulty, songs[curSelected].songCharacter));
-			FlxG.sound.play(Paths.sound('scrollMenu'));
-		}
+		// Ancien système (sous-menu "Yes/No") remplacé par un cheat code (voir checkResetCheatCode()).
 		// ---------------------------
 
 		// ✅ Synchronisation du Conductor avec la musique
@@ -777,6 +786,79 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		notifyArtworkDifficulty();
 
 		refreshIcon(curSelected); // Mise à jour de l'icône selon la difficulté
+	}
+
+	/**
+	 * Ecoute les touches tapées au clavier et compare le buffer avec le cheat code
+	 * "niveau3". Si il correspond, reset direct du score de la chanson sélectionnée,
+	 * sans passer par un sous-menu de confirmation.
+	 */
+	function checkResetCheatCode():Void
+	{
+		var pressedKey:FlxKey = FlxG.keys.firstJustPressed();
+		if (pressedKey == FlxKey.NONE)
+			return;
+
+		var c:String = keyToChar(pressedKey);
+		if (c == null)
+			return;
+
+		cheatBuffer += c;
+		// On ne garde que les derniers caractères utiles pour comparer au code
+		if (cheatBuffer.length > CHEAT_RESET_CODE.length)
+			cheatBuffer = cheatBuffer.substr(cheatBuffer.length - CHEAT_RESET_CODE.length);
+
+		if (cheatBuffer == CHEAT_RESET_CODE)
+		{
+			Highscore.resetSong(songs[curSelected].songName, curDifficulty);
+
+			#if !switch
+			intendedScore = Highscore.getScore(songs[curSelected].songName, curDifficulty);
+			intendedRating = Highscore.getRating(songs[curSelected].songName, curDifficulty);
+			#end
+
+			FlxG.sound.play(Paths.sound('victoire'), 0.3);
+			cheatBuffer = "";
+
+			// Affiche le message de confirmation, puis revient au message d'astuce
+			cheatHintText.text = CHEAT_SUCCESS_MESSAGE;
+			cheatHintText.x = FlxG.width - cheatHintText.width - 10;
+			cheatHintText.y = FlxG.height - cheatHintText.height - 10;
+			new FlxTimer().start(2, function(_)
+			{
+				cheatHintText.text = CHEAT_HINT_MESSAGE;
+				cheatHintText.x = FlxG.width - cheatHintText.width - 10;
+				cheatHintText.y = FlxG.height - cheatHintText.height - 10;
+			});
+		}
+	}
+
+	/**
+	 * Convertit une touche clavier (lettre ou chiffre) en caractère minuscule.
+	 * Retourne null si la touche ne fait pas partie de l'alphabet/chiffres.
+	 */
+	function keyToChar(key:FlxKey):String
+	{
+		return switch (key)
+		{
+			case A: "a"; case B: "b"; case C: "c"; case D: "d"; case E: "e";
+			case F: "f"; case G: "g"; case H: "h"; case I: "i"; case J: "j";
+			case K: "k"; case L: "l"; case M: "m"; case N: "n"; case O: "o";
+			case P: "p"; case Q: "q"; case R: "r"; case S: "s"; case T: "t";
+			case U: "u"; case V: "v"; case W: "w"; case X: "x"; case Y: "y";
+			case Z: "z";
+			case ZERO, NUMPADZERO: "0";
+			case ONE, NUMPADONE: "1";
+			case TWO, NUMPADTWO: "2";
+			case THREE, NUMPADTHREE: "3";
+			case FOUR, NUMPADFOUR: "4";
+			case FIVE, NUMPADFIVE: "5";
+			case SIX, NUMPADSIX: "6";
+			case SEVEN, NUMPADSEVEN: "7";
+			case EIGHT, NUMPADEIGHT: "8";
+			case NINE, NUMPADNINE: "9";
+			default: null;
+		}
 	}
 
 	function changeSelection(change:Int = 0, playSound:Bool = true)

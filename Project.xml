@@ -2,7 +2,7 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': Multivers Collection" file="Multivers Collection" packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine" main="Main" version="v1.2.1" company="Multivers Team" />
+	<app title="Friday Night Funkin': Multivers Collection" file="Multivers Collection" packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine" main="Main" version="v1.2.2" company="Multivers Team" />
 
 	<!--Switch Export with Unique ApplicationID and Icon-->
 	<set name="APP_ID" value="0x0100f6c013bbc000" />

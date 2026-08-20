@@ -109,12 +109,12 @@ class ArtworkSubstate extends FlxSubState {
             difficulties: [3,6,10],          diffLabels: ["Easy", "Normal", "Hard"],
             difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
 
-        {   path: "artworks/so tiny",            text: "BF who wouldn't even reach his ankle.",
+        {   path: "artworks/placeholder",            text: "BF who wouldn't even reach his ankle.",
             desc: "BPM: 147 > ??? / VS. Isabelle",
             difficulties: [3,7,12],          diffLabels: ["Easy", "Normal", "Hard"],
             difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
 
-        {   path: "artworks/star",               text: "OCEANE",
+        {   path: "artworks/star",               text: "Fly to the stars to the sound of her voice.",
             desc: "BPM: 173 / VS. Océane",
             difficulties: [3,7,12],          diffLabels: ["Easy", "Normal", "Hard"],
             difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },

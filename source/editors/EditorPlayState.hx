@@ -110,7 +110,7 @@ class EditorPlayState extends MusicBeatState
 		splash.alpha = 0.0;
 		
 		if (PlayState.SONG.needsVoices)
-			vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song));
+			vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song, CoolUtil.getDifficultyFilePath()));
 		else
 			vocals = new FlxSound();
 
@@ -196,7 +196,7 @@ class EditorPlayState extends MusicBeatState
 	var startingSong:Bool = true;
 	private function generateSong(dataPath:String):Void
 	{
-		FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song), 0, false);
+		FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, CoolUtil.getDifficultyFilePath()), 0, false);
 		FlxG.sound.music.pause();
 		FlxG.sound.music.onComplete = endSong;
 		vocals.pause();

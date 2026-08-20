@@ -845,7 +845,10 @@ class PlayState extends MusicBeatState
 				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('tank3', 1300, 1200, 3.5, 2.5, ['fg']));
 		}
 
-		switch(Paths.formatToSongPath(SONG.song))
+		var songKey:String = Paths.formatToSongPath(SONG.song);
+		var songDiffKey:String = songKey + CoolUtil.getDifficultyFilePath(PlayState.storyDifficulty);
+
+		switch(songKey)
 		{
 			case 'stress':
 				GameOverSubstate.characterName = 'bf-holding-gf-dead';
@@ -853,6 +856,17 @@ class PlayState extends MusicBeatState
 			case 'periple':
 				GameOverSubstate.deathSoundName = 'fnf_loss_sfx_mry';
 
+		    case 'starlight':
+				GameOverSubstate.deathSoundName = 'fnf_loss_sfx-pico';
+				GameOverSubstate.characterName = 'pico_death';
+
+			case 'allocution':
+				GameOverSubstate.endSoundName = 'gameOverEnd-FR';
+		}
+
+		// Conditions propres à une difficulté précise (anciennement encodées dans SONG.song)
+		switch(songDiffKey)
+		{
 			case 'gangstabattle-dead-in-game-version':
 				GameOverSubstate.deathSoundName = 'fnf_loss_sfx_igv';
 				GameOverSubstate.endSoundName = 'none';
@@ -861,13 +875,6 @@ class PlayState extends MusicBeatState
 			case 'gangstabattle-pico-mix':
 				GameOverSubstate.deathSoundName = 'fnf_loss_sfx-pico';
 				GameOverSubstate.characterName = 'pico_death';
-
-		    case 'starlight':
-				GameOverSubstate.deathSoundName = 'fnf_loss_sfx-pico';
-				GameOverSubstate.characterName = 'pico_death';
-
-			case 'allocution':
-				GameOverSubstate.endSoundName = 'gameOverEnd-FR';
 
 			case 'gangstabattle-in-game-version':
 				GameOverSubstate.loopSoundName = 'none';
@@ -1614,6 +1621,18 @@ class PlayState extends MusicBeatState
 		}
 		char.x += char.positionArray[0];
 		char.y += char.positionArray[1];
+	}
+
+	/**
+	 * Précharge le fichier vidéo en RAM sans le jouer. Appelle ça le PLUS TÔT possible
+	 * (ex: onCreate() en Lua), pour que le disque ne soit pas lu au moment où startVideo()
+	 * est réellement appelé.
+	 */
+	public function precacheVideo(name:String)
+	{
+		#if (VIDEOS_ALLOWED && sys)
+		Paths.preloadVideo(name);
+		#end
 	}
 
 	public function startVideo(name:String)
@@ -2379,7 +2398,7 @@ class PlayState extends MusicBeatState
 		previousFrameTime = FlxG.game.ticks;
 		lastReportedPlayheadPosition = 0;
 
-		FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song), 1, false);
+		FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, Paths.songDiffSuffix(PlayState.SONG, PlayState.storyDifficulty)), 1, false);
 		FlxG.sound.music.pitch = playbackRate;
 		FlxG.sound.music.onComplete = finishSong.bind();
 		vocals.play();
@@ -2440,14 +2459,14 @@ class PlayState extends MusicBeatState
 
 		curSong = songData.song;
 
-		if (SONG.needsVoices)
-			vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song));
-		else
-			vocals = new FlxSound();
+if (SONG.needsVoices)
+    vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song, Paths.songDiffSuffix(PlayState.SONG, PlayState.storyDifficulty)));
+else
+    vocals = new FlxSound();
 
-		vocals.pitch = playbackRate;
-		FlxG.sound.list.add(vocals);
-		FlxG.sound.list.add(new FlxSound().loadEmbedded(Paths.inst(PlayState.SONG.song)));
+vocals.pitch = playbackRate;
+FlxG.sound.list.add(vocals);
+FlxG.sound.list.add(new FlxSound().loadEmbedded(Paths.inst(PlayState.SONG.song, Paths.songDiffSuffix(PlayState.SONG, PlayState.storyDifficulty))));
 
 		notes = new FlxTypedGroup<Note>();
 		add(notes);
@@ -2461,32 +2480,57 @@ class PlayState extends MusicBeatState
 
 		var daBeats:Int = 0; // Not exactly representative of 'daBeats' lol, just how much it has looped
 
-		var songName:String = Paths.formatToSongPath(SONG.song);
-		var file:String = Paths.json(songName + '/events');
-		#if MODS_ALLOWED
-		if (FileSystem.exists(Paths.modsJson(songName + '/events')) || FileSystem.exists(file)) {
-		#else
-		if (OpenFlAssets.exists(file)) {
-		#end
-			var eventsData:Array<Dynamic> = Song.loadFromJson('events', songName).events;
-			for (event in eventsData) //Event Notes
+var songName:String = Paths.formatToSongPath(SONG.song);
+var file:String = Paths.json(songName + '/events');
+#if MODS_ALLOWED
+if (FileSystem.exists(Paths.modsJson(songName + '/events')) || FileSystem.exists(file)) {
+#else
+if (OpenFlAssets.exists(file)) {
+#end
+	var eventsJson:Dynamic = Song.loadFromJson('events', songName);
+
+	// Le fichier events.json peut restreindre son application à certaines difficultés
+	// via un champ optionnel "validDifficulties". Absent = appliqué à toutes (comportement d'origine).
+	var validDiffs:Array<String> = Reflect.field(eventsJson, 'validDifficulties');
+	var currentDiffName:String = (CoolUtil.difficulties[PlayState.storyDifficulty] != null)
+		? CoolUtil.difficulties[PlayState.storyDifficulty].toLowerCase()
+		: '';
+
+	var isValidForDiff:Bool = true;
+	if (validDiffs != null && validDiffs.length > 0)
+	{
+		isValidForDiff = false;
+		for (d in validDiffs)
+		{
+			if (d != null && d.toLowerCase() == currentDiffName)
 			{
-				for (i in 0...event[1].length)
-				{
-					var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
-					var eventOffset:Float = (newEventNote[1] == 'playsound') ? 0 : ClientPrefs.noteOffset; // Ignore noteOffset for playsound events
-					var subEvent:EventNote = {
-						strumTime: newEventNote[0] + eventOffset,
-						event: newEventNote[1],
-						value1: newEventNote[2],
-						value2: newEventNote[3]
-					};
-					subEvent.strumTime -= eventNoteEarlyTrigger(subEvent);
-					eventNotes.push(subEvent);
-					eventPushed(subEvent);
-				}
+				isValidForDiff = true;
+				break;
 			}
 		}
+	}
+
+	if (isValidForDiff)
+	{
+		var eventsData:Array<Dynamic> = eventsJson.events;
+		for (event in eventsData) //Event Notes
+		{
+			for (i in 0...event[1].length)
+			{
+				var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
+				var subEvent:EventNote = {
+					strumTime: newEventNote[0] + ClientPrefs.noteOffset,
+					event: newEventNote[1],
+					value1: newEventNote[2],
+					value2: newEventNote[3]
+				};
+				subEvent.strumTime -= eventNoteEarlyTrigger(subEvent);
+				eventNotes.push(subEvent);
+				eventPushed(subEvent);
+			}
+		}
+	}
+}
 
 		for (section in noteData)
 		{
