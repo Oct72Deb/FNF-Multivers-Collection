@@ -47,10 +47,11 @@ class CreditsState extends MusicBeatState
 	public static var creditsList:Array<Array<String>> = [ //Name - Icon name - Description - Link - BG Color
 		["Multivers' Crew"],
 		['Dorix',		'dorix',			"Artist, composer, coder, charter, and many things",							'https://www.youtube.com/@Dorix_444',			'07cd00'],
-		['Nanza',		'nanza',			"Programmer, Composer",				'https://github.com/Nazuz72debug',				'1f4a99'],
+		['Nanza',		'nanza',			"Programmer, Composer",				'https://github.com/Oct72Deb',				'1f4a99'],
 		['CrashyJuny',	'crashyjuny',		"Charter, Coder",			'',												'2e74ff'],
 		['Vastor',		'vastor',			"Charter, Coder",			'https://www.youtube.com/@Vastor6624',			'ac27ff'],
 		['Thatou',		'thatou',			"Voice acting, Artist",			'https://www.youtube.com/@Thatou0_0',			'ff00ff'],
+		['Joset',		'joset',			"Artist",				'https://www.youtube.com/@joset-4',				'e99552'],
 		[''],
 		["Special Thanks"],
 		['Spectros_',         	'spectros',        	"Helped create some freeplay artwork", 	'https://guns.lol/alyaska_fr',                    'cecece'],

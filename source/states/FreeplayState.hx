@@ -9,10 +9,8 @@ import substates.GameplayChangersSubstate;
 
 import PlayState;
 import editors.ChartingState;
-import flash.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.addons.display.FlxGridOverlay;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxMath;
@@ -21,10 +19,8 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
-import lime.utils.Assets;
 import flixel.system.FlxSound;
 import flixel.input.keyboard.FlxKey;
-import openfl.utils.Assets as OpenFlAssets;
 import sys.thread.Thread;
 import WeekData;
 #if MODS_ALLOWED
@@ -92,15 +88,15 @@ class FreeplayState extends MusicBeatState
 	// Ex : "Periple" -> data/periple/ -> clé 'periple' -> HellBG
 	// ==============================================
 	static var hardcodedBackgrounds:Map<String, String> = [
-		'periple' => 'freeplayBG/periple',
-		'allocution' => 'freeplayBG/allocution',
-		'crash-out' => 'freeplayBG/crash_out',
-		'new-game' => 'freeplayBG/new_game',
-		'criminal-targets' => 'freeplayBG/criminal_targets',
-		'how-to-play' => 'freeplayBG/how_to_play',
-		'metal-reflection' => 'freeplayBG/metal_reflection',
-		'gangstabattle' => 'freeplayBG/gangstabattle',
-		'starlight' => 'freeplayBG/starlight',
+		'periple' => 'freeplay/freeplayBG/periple',
+		'allocution' => 'freeplay/freeplayBG/allocution',
+		'crash-out' => 'freeplay/freeplayBG/crash_out',
+		'new-game' => 'freeplay/freeplayBG/new_game',
+		'criminal-targets' => 'freeplay/freeplayBG/criminal_targets',
+		'how-to-play' => 'freeplay/freeplayBG/how_to_play',
+		'metal-reflection' => 'freeplay/freeplayBG/metal_reflection',
+		'gangstabattle' => 'freeplay/freeplayBG/gangstabattle',
+		'starlight' => 'freeplay/freeplayBG/starlight',
 		// 'nom-de-la-chanson' => 'NomDuFond',
 	];
 
@@ -212,17 +208,6 @@ for (i in 0...WeekData.weeksList.length) {
 				Paths.image(bgName);
 		}
 
-		/*		//KIND OF BROKEN NOW AND ALSO PRETTY USELESS//
-
-		var initSonglist = CoolUtil.coolTextFile(Paths.txt('freeplaySonglist'));
-		for (i in 0...initSonglist.length)
-		{
-			if(initSonglist[i] != null && initSonglist[i].length > 0) {
-				var songArray:Array<String> = initSonglist[i].split(":");
-				addSong(songArray[0], 0, songArray[1], Std.parseInt(songArray[2]));
-			}
-		}*/
-
 		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
 		add(bg);
@@ -331,23 +316,6 @@ for (i in 0...WeekData.weeksList.length) {
 		changeDiff();
 
 		var swag:Alphabet = new Alphabet(1, 0, "swag");
-
-		// JUST DOIN THIS SHIT FOR TESTING!!!
-		/* 
-			var md:String = Markdown.markdownToHtml(Assets.getText('CHANGELOG.md'));
-
-			var texFel:TextField = new TextField();
-			texFel.width = FlxG.width;
-			texFel.height = FlxG.height;
-			// texFel.
-			texFel.htmlText = md;
-
-			FlxG.stage.addChild(texFel);
-
-			// scoreText.textField.htmlText = md;
-
-			trace(md);
-		 */
 
 		super.create();
 
@@ -721,30 +689,35 @@ for (i in 0...WeekData.weeksList.length) {
 
 if (instPlaying != curSelected || diffPlaying != curDifficulty)
 {
-	var baseSongKey:String = Paths.formatToSongPath(songs[curSelected].songName);
-	var diffFormattedName:String = Highscore.formatSong(baseSongKey, curDifficulty);
+	var info = resolveInstInfo(curSelected, curDifficulty);
+	var targetTrack:String = info.targetTrack;
+	var loadedSong:Dynamic = info.loadedSong;
+	var diffSuffix:String = info.diffSuffix;
+	var trackKey:String = targetTrack + info.actualInstSuffix; // clé basée sur le fichier RÉELLEMENT joué
 
-	var targetTrack:String = baseSongKey;
-	var loadedSong:Dynamic = null;
-
-	try {
-		loadedSong = Song.loadFromJson(diffFormattedName, baseSongKey);
-		if (loadedSong != null && loadedSong.song != null) {
-			targetTrack = Paths.formatToSongPath(loadedSong.song);
-		}
-	} catch(e:Dynamic) {
-		loadedSong = null;
-	}
-
-var diffSuffix:String = Paths.songDiffSuffix(loadedSong, curDifficulty);
-var actualInstSuffix:String = Paths.resolveDiffSuffix(targetTrack, 'Inst', diffSuffix);
-var trackKey:String = targetTrack + actualInstSuffix; // clé basée sur le fichier RÉELLEMENT joué
+// On ne considère la sélection comme "réglée" (instPlaying/diffPlaying mis à jour
+// à la fin) que si l'inst à jouer est bien prête. Tant qu'elle ne l'est pas, on
+// laisse ces variables telles quelles : ce bloc sera retenté au tick suivant, sans
+// jamais bloquer le thread principal entre-temps. prefetchNearbyInsts() (appelé
+// depuis changeSelection()/changeDiff()) a normalement déjà lancé ce chargement
+// bien avant qu'on arrive ici.
+var instFullKey:String = info.instFullKey;
+var instReady:Bool = (trackKey == instNamePlaying) || Paths.isSoundCached('songs', instFullKey);
 
 if (trackKey != instNamePlaying)
 {
-	FlxG.sound.music.volume = 0;
-	FlxG.sound.playMusic(Paths.inst(targetTrack, diffSuffix), 0);
-	instNamePlaying = trackKey;
+	if (!instReady)
+	{
+		// Le fichier n'est pas encore décodé en mémoire : on lance son
+		// chargement en tâche de fond et on repasse au tick suivant sans
+		// toucher à la musique actuelle (donc sans freeze).
+		Paths.cacheSoundAsync('songs', instFullKey);
+	}
+	else
+	{
+		FlxG.sound.music.volume = 0;
+		FlxG.sound.playMusic(Paths.inst(targetTrack, diffSuffix), 0);
+		instNamePlaying = trackKey;
 
 		if (targetTrack == "new game" || targetTrack == "new-game")
 			FlxG.sound.music.time = 23170;
@@ -766,14 +739,18 @@ if (trackKey != instNamePlaying)
 		curSection = 0;
 		stepsToDo = 0;
 	}
+}
 
 			if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 				var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
 				artSub.updateArtworkForSong(songs[curSelected].songName);
 			}
 
-			instPlaying = curSelected;
-			diffPlaying = curDifficulty;
+			if (trackKey == instNamePlaying)
+			{
+				instPlaying = curSelected;
+				diffPlaying = curDifficulty;
+			}
 		}
 		else if (accepted)
 		{
@@ -905,6 +882,8 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		notifyArtworkDifficulty();
 
 		refreshIcon(curSelected); // Mise à jour de l'icône selon la difficulté
+
+		prefetchNearbyInsts();
 	}
 
 	/**
@@ -1066,6 +1045,70 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		{
 			curDifficulty = newPos;
 		}
+
+		prefetchNearbyInsts();
+	}
+
+	/**
+	 * Reproduit la résolution de piste utilisée dans update() (JSON du chart,
+	 * remap éventuel du nom de piste, suffixe de difficulté) pour un couple
+	 * (index de chanson, index de difficulté) donné. Centralise cette logique
+	 * pour que update() ET le préchargement prioritaire restent cohérents.
+	 */
+	function resolveInstInfo(songIndex:Int, diffIndex:Int):{targetTrack:String, diffSuffix:String, actualInstSuffix:String, instFullKey:String, loadedSong:Dynamic}
+	{
+		var baseSongKey:String = Paths.formatToSongPath(songs[songIndex].songName);
+		var diffFormattedName:String = Highscore.formatSong(baseSongKey, diffIndex);
+
+		var targetTrack:String = baseSongKey;
+		var loadedSong:Dynamic = null;
+
+		try {
+			loadedSong = Song.loadFromJson(diffFormattedName, baseSongKey);
+			if (loadedSong != null && loadedSong.song != null) {
+				targetTrack = Paths.formatToSongPath(loadedSong.song);
+			}
+		} catch(e:Dynamic) {
+			loadedSong = null;
+		}
+
+		var diffSuffix:String = Paths.songDiffSuffix(loadedSong, diffIndex);
+		var actualInstSuffix:String = Paths.resolveDiffSuffix(targetTrack, 'Inst', diffSuffix);
+		var instFullKey:String = targetTrack + '/Inst' + actualInstSuffix;
+
+		return {targetTrack: targetTrack, diffSuffix: diffSuffix, actualInstSuffix: actualInstSuffix, instFullKey: instFullKey, loadedSong: loadedSong};
+	}
+
+	/**
+	 * Lance en tâche de fond le chargement des Inst de la chanson sélectionnée
+	 * et de ses voisines immédiates (précédente/suivante dans la liste), pour
+	 * la difficulté courante. Comble le trou du préchargement séquentiel de
+	 * create() quand on scrolle vite : le temps qu'on arrive réellement sur
+	 * une chanson, son chargement a souvent déjà commencé (voire terminé).
+	 * N'a aucun effet si le fichier est déjà en cache ou déjà en cours de
+	 * chargement (cacheSoundAsync() s'en charge).
+	 */
+	function prefetchNearbyInsts():Void
+	{
+		if (songs.length == 0) return;
+
+		var indices:Array<Int> = [curSelected];
+		if (songs.length > 1)
+		{
+			indices.push((curSelected + 1) % songs.length);
+			indices.push((curSelected - 1 + songs.length) % songs.length);
+		}
+
+		var savedModDir:String = Paths.currentModDirectory;
+
+		for (i in indices)
+		{
+			Paths.currentModDirectory = songs[i].folder;
+			var info = resolveInstInfo(i, curDifficulty);
+			Paths.cacheSoundAsync('songs', info.instFullKey);
+		}
+
+		Paths.currentModDirectory = savedModDir;
 	}
 
 	private function positionHighscore() {

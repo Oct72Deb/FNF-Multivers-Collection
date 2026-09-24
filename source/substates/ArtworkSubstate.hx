@@ -13,13 +13,13 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import Paths;
 import PlayState;
 import Conductor;
+import openfl.utils.AssetType;
 
 class ArtworkSubstate extends FlxSubState {
     
     private var _pressingPractice:Bool = false;
     private var _pressingBot:Bool = false;
 
-    // UI
     var checkboxGroup:FlxTypedGroup<CheckboxThingie>;
     var labelGroup:FlxTypedGroup<FlxText>;
 
@@ -42,23 +42,21 @@ class ArtworkSubstate extends FlxSubState {
     var barTargetPercent:Float = 0;
 
     private var optionsArray:Array<ArtworkGameplayOption> = [];
-    private var curIndex:Int = 0;
     public var currentWeek:String;
 
-    // Valeurs d'initialisation transmises par FreeplayState via le constructeur
-    // (create() est différé, on ne peut pas appeler updateArtworkForSong avant)
     private var _initSongName:String = "";
     private var _initDifficulty:Int = 1;
 
-    // Difficulty — géré uniquement par FreeplayState via setDifficulty()
-    var currentDifficulty:Int = 1;
-    var currentDifficultyName:String = "normal"; // Nom de la difficulté courante (lowercase)
+    var songKey:String = null; 
+    var entry:ArtworkEntry = null;
+    var currentDifficultyName:String = "normal";
 
-    // ---------- BOX CONFIG ----------
-    var scaleBox:Float = 0.4;    
     var clickMargin:Float = 8;  
-    var labelOffsetX:Float = 32; 
-    var labelOffsetY:Float = 0;
+    var labelOffsetX:Float = 42; 
+    var labelOffsetY:Float = 10;
+
+    var checkboxSizeMult:Float = 0.5;
+
     var gapY:Float = 100;         
     // ----------------------------
 
@@ -71,74 +69,100 @@ class ArtworkSubstate extends FlxSubState {
         persistentDraw = true;
     }
 
-    static var artworks:Array<{path:String, text:String, desc:String, difficulties:Array<Int>, diffLabels:Array<String>, difficultyArtworks:Map<String, String>, difficultyTexts:Map<String, String>, difficultyDescs:Map<String, String>, ?difficultyValues:Map<String, Int>}> =
-    [
+    static final ARTWORKS:Map<String, ArtworkEntry> = [
 
-        {   path: "artworks/placeholder",        text: "???",
-            desc: "???Dummy_placeholder???",
-            difficulties: [0,0,0],          diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
-
-        {   path: "artworks/HOW_TO_PLAY",        text: "Don't know how to play? No problem! The Mario Bros. are here for you!",
+        "how to play" => {
+            text: "Don't know how to play? No problem! The Mario Bros. are here for you!",
             desc: "BPM: 124 / VS. Mario Bros.",
-            difficulties: [2,6,10,17,20],    diffLabels: ["VeryEasy", "Easy", "Normal", "Hard", "Veryhard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["veryeasy" => 2, "easy" => 6, "normal" => 10, "hard" => 17, "veryhard" => 20]
+        },
 
-        {   path: "artworks/HOW_TO_PLAY",        text: "An opponent who reflects mystery...",
+        "metal reflection" => {
+            text: "An opponent who reflects mystery...",
             desc: "BPM: 120 / VS. Metal Mario",
-            difficulties: [0,4,8,12,20],    diffLabels: ["VeryEasy", "Easy", "Normal", "Hard", "Veryhard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["veryeasy" => 0, "easy" => 4, "normal" => 8, "hard" => 12, "veryhard" => 20]
+        },
 
-        {   path: "artworks/targets",            text: "Ayuwoki ?",
-            desc: "BPM: 118 / BONUS STAGE",
-            difficulties: [0,0,0],           diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+        "criminal targets" => {
+            text: "Ayuwoki ?",
+            desc: "BPM: 118 / BONUS STAGE"
+            // pas de "levels" = barre vide
+        },
 
-        {   path: "artworks/puff",               text: "A little pink ball crashing out on a fox to the beat.",
+        "crash out" => {
+            text: "A little pink ball crashing out on a fox to the beat.",
             desc: "BPM: 180 / VS. FUCKING Fox McCloud",
-            difficulties: [3,6,10],          diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["easy" => 3, "normal" => 6, "hard" => 10]
+        },
 
-        {   path: "artworks/HOW_TO_PLAY",        text: "A candy hunt connected to the real world.",
+        "trick or treat" => {
+            text: "A candy hunt connected to the real world.",
             desc: "BPM: 125 > 145 > 210 > 145 / VS. ???",
-            difficulties: [3,6,10],          diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["easy" => 3, "normal" => 6, "hard" => 10]
+        },
 
-        {   path: "artworks/placeholder",        text: "A candy shitshow connected to a parallel universe.",
-            desc: "BPM: 140 / VS. ???",
-            difficulties: [3,6,10],          diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
-
-        {   path: "artworks/placeholder",            text: "tiny guy",
+        "periple" => {
+            text: "tiny guy",
             desc: "BPM: 163 / VS. Mary",
-            difficulties: [3,7,12],          diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["easy" => 3, "normal" => 7, "hard" => 12]
+        },
 
-        {   path: "artworks/star",               text: "Fly to the stars to the sound of her voice.",
+        "starlight" => {
+            text: "Fly to the stars to the sound of her voice.",
             desc: "BPM: 173 / VS. Océane",
-            difficulties: [3,7,12],          diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["easy" => 3, "normal" => 7, "hard" => 12]
+        },
 
-        {   path: "artworks/scarymacron",        text: "Fight it out in beeps and boops without getting overruled.",
+        "allocution" => {
+            text: "Fight it out in beeps and boops without getting overruled.",
             desc: "BPM: 155 / VS. Emmanuel Macron",
-            difficulties: [6,10,20],         diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["easy" => 6, "normal" => 10, "hard" => 20]
+        },
 
-        {   path: "artworks/SilvaGunner_Banner", text: "???",
-            desc: "BPM: 180 / VS. Gangsta Mario",
-            difficulties: [6,10,15],         diffLabels: ["Easy", "Normal", "Hard", "Pico-mix", "B-side", "Corruption", "Minus", "In-game-version", "In-game-mix"],
-            difficultyArtworks: ["erect" => "artworks/epicrap", "nightmare" => "artworks/epicrap", "in-game-version" => "artworks/SilvaGunner_Banner_igv", "in-game-mix" => "artworks/SilvaGunner_Banner_igm", "corruption" => "artworks/SilvaGunner_Banner_corruption"],
-            difficultyTexts:    ["erect" => "Version Erect !"],
-            difficultyDescs:    ["erect" => "BPM: 180 / VS Gangsta Mario (Erect)"],
-            // TODO: valeurs a ajuster selon le vrai ressenti de diff de chaque variante (prototype)
-            difficultyValues:   ["erect" => 18, "nightmare" => 20, "pico-mix" => 12, "b-side" => 14,
-                                  "corruption" => 16, "minus" => 8, "in-game-version" => 10, "in-game-mix" => 11], },
+"gangstabattle" => {
+    text: "???",
+    desc: "BPM: 180 / VS. Gangsta Mario",
+    // TODO: valeurs à ajuster selon le vrai ressenti de chaque variante (prototype)
+    levels: ["easy" => 6, "normal" => 10, "hard" => 15,
+             "erect" => 18, "nightmare" => 20, "pico-mix" => 12, "b-side" => 14,
+             "corruption" => 16, "minus" => 8, "in-game-version" => 10, "in-game-mix" => 11],
+    variants: [
+        "erect" => { text: "???", desc: "BPM: 190 / VS. Gangsta Mario" },
+        "nightmare" => { text: "???", desc: "BPM: 190 / VS. Gangsta Mario" },
+        "corruption" => { text: "???", desc: "BPM: 205 / VS. Gangsta Mario" },
+        "in-game-version" => { text: "???", desc: "BPM: 180 / VS. ???" }
+    ]
+},
 
-        {   path: "artworks/new_game",           text: "Mario get you next time!",
+        "new game" => {
+            text: "Mario get you next time!",
             desc: "BPM: 145 / VS. Super Horror Mario",
-            difficulties: [5,10,15],         diffLabels: ["Easy", "Normal", "Hard"],
-            difficultyArtworks: null,        difficultyTexts: null,        difficultyDescs: null },
+            levels: ["easy" => 5, "normal" => 10, "hard" => 15]
+        },
     ];
+
+    // Valeurs affichées pour une chanson inconnue
+    static inline var PLACEHOLDER:String = "freeplay/artworks/placeholder";
+    static inline var DEFAULT_TEXT:String = "???";
+    static inline var DEFAULT_DESC:String = "???Dummy_placeholder???";
+    static inline var MAX_LEVEL:Float = 20; // niveau qui remplit toute la barre
+
+    // Table de recherche : clés normalisées une seule fois avec Paths.formatToSongPath,
+    // pour que "How To Play", "how to play" et "how-to-play" soient équivalents.
+    static var lookup:Map<String, ArtworkEntry> = null;
+
+    static function findEntry(key:String):ArtworkEntry {
+        if (lookup == null) {
+            lookup = new Map<String, ArtworkEntry>();
+            for (name => e in ARTWORKS)
+                lookup.set(Paths.formatToSongPath(name), e);
+        }
+        return lookup.get(key);
+    }
+
+    static function imageExists(path:String):Bool {
+        return path != null && Paths.fileExists('images/$path.png', AssetType.IMAGE);
+    }
 
     override function create() {
         super.create();
@@ -176,25 +200,34 @@ class ArtworkSubstate extends FlxSubState {
 
         getOptions();
 
-        var baseX:Float = bg.x + 40;
-        var baseY:Float = bg.y + 580;
-        var gapY:Float = 56;
+        var baseX:Float = bg.x + 40 - 20;   // +10px vers la droite
+        var baseY:Float = bg.y + 580 - 20;  // -20px vers le haut
         var id:Int = 0;
+        var cbGapY:Float = 56; // valeur de repli, écrasée dès la 1ère checkbox créée (voir plus bas)
         for (opt in optionsArray) {
             if (opt.type == "bool") {
-                var cb:CheckboxThingie = new CheckboxThingie(0, 0, opt.getValue() == true);
+                // IMPORTANT : on NE touche PLUS à cb.scale ici. Les offsets faits-main dans
+                // CheckboxThingie (offset.set(34,25) etc.) sont calibrés pour la taille que
+                // le CONSTRUCTEUR établit lui-même (setGraphicSize(0.9 * width), comme dans
+                // le menu Options). Rescaler la checkbox plus loin (ex. à 0.4) rend ces
+                // corrections en pixels fixes disproportionnées par rapport à sa taille réduite,
+                // ce qui causait le petit "saut" visuel. On garde donc la checkbox à sa taille
+                // native, et on ajuste juste le layout autour (gapY dynamique ci-dessous).
+                var cb:CheckboxThingie = new CheckboxThingie(0, 0, opt.getValue() == true, checkboxSizeMult);
                 cb.x = baseX;
-                cb.y = baseY + id * gapY;
-                cb.scale.set(scaleBox, scaleBox);
-                setCheckboxVisual(cb, cb.daValue);
-                cb.updateHitbox();
+                cb.y = baseY + id * cbGapY;
                 cb.ID = id;
                 checkboxGroup.add(cb);
 
+                // Espace vertical entre checkboxes = hauteur réelle de la checkbox (native) + marge,
+                // calculé une fois sur la 1ère checkbox plutôt qu'une valeur en dur qui suppose
+                // une taille fixe.
+                if (id == 0) cbGapY = cb.height + 20;
+
                 var lbl:FlxText = new FlxText(0, 0, 300, opt.name);
                 lbl.setFormat(null, 16, FlxColor.WHITE, "left");
-                lbl.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
-                lbl.y = cb.y + (cb.height * cb.scale.y - lbl.size) / 2 + labelOffsetY;
+                lbl.x = cb.x + cb.width + labelOffsetX;
+                lbl.y = cb.y + (cb.height - lbl.size) / 2 + labelOffsetY;
                 labelGroup.add(lbl);
 
                 if (opt.variable == "practice") {
@@ -211,12 +244,9 @@ class ArtworkSubstate extends FlxSubState {
         reloadCheckboxes();
         applyOptions();
 
-        // FIX 3 — On utilise les valeurs passées au constructeur par FreeplayState
-        // (_initSongName / _initDifficulty) plutôt que PlayState.SONG.song.
-        // openSubState() diffère create() au prochain tick, donc FreeplayState ne peut
-        // pas appeler updateArtworkForSong() après openSubState() : artImage serait null.
-        // Le constructeur reçoit les bonnes valeurs, et create() les applique ici,
-        // quand tous les sprites sont initialisés.
+        // create() est différé par openSubState() : FreeplayState ne peut pas appeler
+        // updateArtworkForSong() juste après. On applique donc ici les valeurs reçues par
+        // le constructeur, quand tous les sprites existent.
         if (_initSongName != "")
             updateArtworkForSong(_initSongName);
         setDifficulty(_initDifficulty);
@@ -228,104 +258,106 @@ class ArtworkSubstate extends FlxSubState {
         optionsArray.push(new ArtworkGameplayOption("Botplay", "botplay", "bool", false));
     }
 
-    function setCheckboxVisual(cb:CheckboxThingie, value:Bool):Void {
-        cb.animation.play(value ? "on" : "off");
-        cb.animation.play(value ? "checked" : "unchecked");
-    }
+    // NOTE : setCheckboxVisual() a été retirée. CheckboxThingie pilote toute la chaîne
+    // d'animation ("checking"->"checked" / "unchecking"->"unchecked") ET l'offset fait-main
+    // de chaque frame directement dans son setter set_daValue() (voir CheckboxThingie.hx).
+    // Il suffit donc partout d'assigner cb.daValue = value; — ne JAMAIS appeler
+    // cb.animation.play(...) ni cb.updateHitbox() sur un CheckboxThingie après sa création,
+    // sous peine de casser la transition ou d'écraser l'offset et de faire "sauter" la case.
 
     function reloadCheckboxes():Void {
         for (cb in checkboxGroup) {
             var idx = cb.ID;
             if (idx >= 0 && idx < optionsArray.length) {
                 var v = optionsArray[idx].getValue() == true;
-                cb.daValue = v;
-                setCheckboxVisual(cb, v);
-                cb.updateHitbox();
+                cb.daValue = v; // déclenche déjà, via le setter, la bonne animation + le bon offset
                 var lbl:FlxText = labelGroup.members[idx];
                 if (lbl != null) {
-                    lbl.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
-                    lbl.y = cb.y + (cb.height * cb.scale.y - lbl.size) / 2 + labelOffsetY;
+                    lbl.x = cb.x + cb.width + labelOffsetX;
+                    lbl.y = cb.y + (cb.height - lbl.size) / 2 + labelOffsetY;
                 }
             }
         }
     }
 
-public function updateArtworkForSong(songName:String):Void {
-    // 1. Déterminer l'index cible basé sur le nom
-    var nextIndex = switch(songName.toLowerCase()) {
-        case "how to play": 1;
-        case "metal reflection": 2;
-        case "criminal targets": 3;
-        case "crash out": 4;
-        case "trick or treat": 5;
-        case "trick or treat old": 6;
-        case "periple": 7;
-        case "starlight": 8;
-        case "allocution": 9;
-        case "gangstabattle": 10;
-        case "new game": 11;            
-        default: 0;
-    };
+    // Appelé par FreeplayState quand la chanson sélectionnée change
+    public function updateArtworkForSong(songName:String):Void {
+        var key = Paths.formatToSongPath(songName);
 
-    // 2. CONDITION CRUCIALE : Si l'index est identique et qu'une image est déjà chargée, 
-    // on s'arrête là pour éviter de relancer l'animation de slide et le rechargement.
-    if (nextIndex == curIndex && artImage.graphic != null) return;
+        // Même chanson et image déjà chargée : on évite de relancer le slide et le rechargement.
+        if (key == songKey && artImage.graphic != null) return;
 
-    // 3. Sinon, on met à jour l'index et on affiche l'artwork normalement
-    curIndex = nextIndex;
-
-    var maxDiff:Int = artworks[curIndex].diffLabels.length - 1;
-    if (currentDifficulty > maxDiff) currentDifficulty = maxDiff;
-
-    showArtwork(curIndex);
-}
-
-    // Retourne le chemin de l'artwork selon la difficulté courante, avec fallback sur le chemin de base
-    function getArtworkPath(index:Int):String {
-        var a = artworks[index];
-        var basePath = (a.path == "" || a.path == null) ? "artworks/placeholder" : a.path;
-        if (a.difficultyArtworks != null && a.difficultyArtworks.exists(currentDifficultyName))
-            return a.difficultyArtworks.get(currentDifficultyName);
-        return basePath;
+        songKey = key;
+        entry = findEntry(key);
+        showArtwork();
     }
 
-    // Retourne le texte selon la difficulté courante, avec fallback sur le texte de base
-    function getTextForDiff(index:Int):String {
-        var a = artworks[index];
-        if (a.difficultyTexts != null && a.difficultyTexts.exists(currentDifficultyName))
-            return a.difficultyTexts.get(currentDifficultyName);
-        return a.text;
+    // Surcharge éventuelle (art/text/desc) pour la difficulté courante
+    function getVariant():ArtworkVariant {
+        if (entry != null && entry.variants != null)
+            return entry.variants.get(currentDifficultyName);
+        return null;
     }
 
-    // Retourne la description selon la difficulté courante, avec fallback sur la desc de base
-    function getDescForDiff(index:Int):String {
-        var a = artworks[index];
-        if (a.difficultyDescs != null && a.difficultyDescs.exists(currentDifficultyName))
-            return a.difficultyDescs.get(currentDifficultyName);
-        return a.desc;
+    // Chemin de l'artwork, dans l'ordre :
+    //   1. variants[difficulté].art
+    //   2. <art>-<difficulté>   (ex: star-hard)   <- automatique
+    //   3. <art>                (art de l'entrée, ou freeplay/artworks/<chanson> par défaut)
+    //   4. placeholder
+    function getArtworkPath():String {
+        var v = getVariant();
+        if (v != null && imageExists(v.art)) return v.art;
+
+        var base = (entry != null && entry.art != null) ? entry.art : 'freeplay/artworks/$songKey';
+        var perDiff = '$base-$currentDifficultyName';
+        if (imageExists(perDiff)) return perDiff;
+        if (imageExists(base)) return base;
+        return PLACEHOLDER;
     }
 
-    // Appele par FreeplayState apres chaque changeDiff() — source unique de verite
+    function getTextForDiff():String {
+        var v = getVariant();
+        if (v != null && v.text != null) return v.text;
+        if (entry != null && entry.text != null) return entry.text;
+        return DEFAULT_TEXT;
+    }
+
+    function getDescForDiff():String {
+        var v = getVariant();
+        if (v != null && v.desc != null) return v.desc;
+        if (entry != null && entry.desc != null) return entry.desc;
+        return DEFAULT_DESC;
+    }
+
+    // Niveau (0-20) de la difficulté courante, retrouvé par NOM de difficulté
+    function getLevel():Float {
+        if (entry == null || entry.levels == null) return 0;
+        if (entry.levels.exists(currentDifficultyName))
+            return entry.levels.get(currentDifficultyName);
+        #if debug
+        trace('[ArtworkSubstate] "$songKey" : pas de niveau pour la difficulté "$currentDifficultyName"');
+        #end
+        return 0;
+    }
+
+    // Appelé par FreeplayState après chaque changeDiff() — source unique de vérité
     public function setDifficulty(diff:Int):Void {
         // On mémorise les anciennes valeurs AVANT de changer la difficulté
-        var oldPath = getArtworkPath(curIndex);
-        var oldText = getTextForDiff(curIndex);
-        var oldDesc = getDescForDiff(curIndex);
+        var oldPath = getArtworkPath();
+        var oldText = getTextForDiff();
+        var oldDesc = getDescForDiff();
 
-        // Maintenant seulement on met à jour le nom de difficulté
+        // Le nom de difficulté vient directement de CoolUtil.difficulties
         if (diff >= 0 && diff < CoolUtil.difficulties.length)
             currentDifficultyName = StringTools.trim(CoolUtil.difficulties[diff].toLowerCase());
 
-        var maxDiff:Int = artworks[curIndex].diffLabels.length - 1;
-        currentDifficulty = Std.int(Math.max(0, Math.min(diff, maxDiff)));
-
-        var newPath = getArtworkPath(curIndex);
-        var newText = getTextForDiff(curIndex);
-        var newDesc = getDescForDiff(curIndex);
+        var newPath = getArtworkPath();
+        var newText = getTextForDiff();
+        var newDesc = getDescForDiff();
 
         // Si l'artwork a changé, on déclenche le slide — sinon on met juste à jour la barre
         if (newPath != oldPath)
-            showArtwork(curIndex);
+            showArtwork();
         else
             updateDifficultyBar();
 
@@ -344,10 +376,8 @@ public function updateArtworkForSong(songName:String):Void {
     var bopStrength:Float = 0.06;    // amplitude du "pop" sur le beat (0.12 = +12%)
     var bopEaseSpeed:Float = 0.20;   // vitesse de retour au scale normal (plus haut = plus rapide)
 
-    public function showArtwork(index:Int):Void {
-        var a = artworks[index];
-        var path = getArtworkPath(index); // Utilise l'artwork de la difficulté si disponible
-        artImage.loadGraphic(Paths.image(path));
+    public function showArtwork():Void {
+        artImage.loadGraphic(Paths.image(getArtworkPath()));
         artImage.scale.set(baseArtScale, baseArtScale);
         artImage.updateHitbox();
         artImage.screenCenter();
@@ -359,27 +389,13 @@ public function updateArtworkForSong(songName:String):Void {
 
         updateDifficultyBar();
 
-        artDesc.text = getDescForDiff(index);
-        artText.text = getTextForDiff(index);
+        artDesc.text = getDescForDiff();
+        artText.text = getTextForDiff();
         isAnimating = true;
     }
 
     public function updateDifficultyBar():Void {
-        var a = artworks[curIndex];
-        var rawValue:Float = 0;
-
-        if (a != null) {
-            // Priorite a la valeur nommee (diffs "bonus" type erect/corruption/etc.)
-            if (a.difficultyValues != null && a.difficultyValues.exists(currentDifficultyName)) {
-                rawValue = a.difficultyValues.get(currentDifficultyName);
-            }
-            // Sinon fallback sur l'array de base (Easy/Normal/Hard)
-            else if (a.difficulties != null && a.difficulties.length > currentDifficulty) {
-                rawValue = a.difficulties[currentDifficulty];
-            }
-        }
-
-        barTargetPercent = Math.max(0, Math.min(rawValue / 20, 1));
+        barTargetPercent = Math.max(0, Math.min(getLevel() / MAX_LEVEL, 1));
     }
 
     function getBarColor(percent:Float):FlxColor {
@@ -403,14 +419,19 @@ public function updateArtworkForSong(songName:String):Void {
         }
     }
 
+    // IMPORTANT : on ne teste PLUS cb.x/cb.width/cb.height (la hitbox brute), car celle-ci
+    // ignore totalement "offset" (qui ne décale QUE le rendu visuel, pas la hitbox). Résultat
+    // avec l'ancienne méthode : la zone cliquable réelle était décalée par rapport à ce que le
+    // joueur voit — clic "sous" la checkbox qui l'active quand même, clic "dans" la checkbox
+    // mais trop à droite qui ne fait rien. getScreenBounds() calcule le vrai rectangle visible
+    // à l'écran (offset + scale + caméra pris en compte), donc la détection colle enfin au
+    // dessin, quel que soit checkboxSizeMult.
     function isMouseInExpandedRect(cb:CheckboxThingie, mouseX:Float, mouseY:Float, margin:Float):Bool {
-        var cam = FlxG.camera;
-        var cbScreenX = cb.x - cam.scroll.x;
-        var cbScreenY = cb.y - cam.scroll.y;
-        var cbW = cb.width * cb.scale.x;
-        var cbH = cb.height * cb.scale.y;
-        return mouseX >= (cbScreenX - margin) && mouseX <= (cbScreenX + cbW + margin) &&
-               mouseY >= (cbScreenY - margin) && mouseY <= (cbScreenY + cbH + margin);
+        var bounds = cb.getScreenBounds();
+        var hit = mouseX >= (bounds.x - margin) && mouseX <= (bounds.x + bounds.width + margin) &&
+                  mouseY >= (bounds.y - margin) && mouseY <= (bounds.y + bounds.height + margin);
+        bounds.put(); // FlxRect vient d'un pool, on le rend pour éviter les fuites
+        return hit;
     }
 
     override function update(elapsed:Float) {
@@ -468,8 +489,7 @@ public function updateArtworkForSong(songName:String):Void {
             var cb:CheckboxThingie = checkboxGroup.members[i];
             if (cb == null) continue;
 
-            var hover:Bool = cb.overlapsPoint(mouseScreen);
-            if (!hover) hover = isMouseInExpandedRect(cb, mx, my, clickMargin);
+            var hover:Bool = isMouseInExpandedRect(cb, mx, my, clickMargin);
 
             var lbl:FlxText = labelGroup.members[i];
             if (lbl != null) hover = hover || lbl.overlapsPoint(mouseScreen);
@@ -483,13 +503,11 @@ public function updateArtworkForSong(songName:String):Void {
                     var newVal = !(optImmediate.getValue() == true);
                     optImmediate.setValue(newVal);
                     optImmediate.change();
-                    cb.daValue = newVal;
-                    setCheckboxVisual(cb, newVal);
-                    cb.updateHitbox();
+                    cb.daValue = newVal; // déclenche déjà, via le setter, la bonne animation + le bon offset
                     var lbl2:FlxText = labelGroup.members[i];
                     if (lbl2 != null) {
-                        lbl2.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
-                        lbl2.y = cb.y + (cb.height * cb.scale.y - lbl2.size) / 2 + labelOffsetY;
+                        lbl2.x = cb.x + cb.width + labelOffsetX;
+                        lbl2.y = cb.y + (cb.height - lbl2.size) / 2 + labelOffsetY;
                     }
                     changed = true;
                     if (checkboxPractice == cb) _pressingPractice = false;
@@ -506,13 +524,11 @@ public function updateArtworkForSong(songName:String):Void {
                             var newValP = !curP;
                             optP.setValue(newValP);
                             optP.change();
-                            cb.daValue = newValP;
-                            setCheckboxVisual(cb, newValP);
-                            cb.updateHitbox();
+                            cb.daValue = newValP; // déclenche déjà, via le setter, la bonne animation + le bon offset
                             var lblp:FlxText = labelGroup.members[i];
                             if (lblp != null) {
-                                lblp.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
-                                lblp.y = cb.y + (cb.height * cb.scale.y - lblp.size) / 2 + labelOffsetY;
+                                lblp.x = cb.x + cb.width + labelOffsetX;
+                                lblp.y = cb.y + (cb.height - lblp.size) / 2 + labelOffsetY;
                             }
                             changed = true;
                         }
@@ -528,13 +544,11 @@ public function updateArtworkForSong(songName:String):Void {
                             var newValB = !curB;
                             optB.setValue(newValB);
                             optB.change();
-                            cb.daValue = newValB;
-                            setCheckboxVisual(cb, newValB);
-                            cb.updateHitbox();
+                            cb.daValue = newValB; // déclenche déjà, via le setter, la bonne animation + le bon offset
                             var lblb:FlxText = labelGroup.members[i];
                             if (lblb != null) {
-                                lblb.x = cb.x + (cb.width * cb.scale.x) + labelOffsetX;
-                                lblb.y = cb.y + (cb.height * cb.scale.y - lblb.size) / 2 + labelOffsetY;
+                                lblb.x = cb.x + cb.width + labelOffsetX;
+                                lblb.y = cb.y + (cb.height - lblb.size) / 2 + labelOffsetY;
                             }
                             changed = true;
                         }
@@ -548,8 +562,7 @@ public function updateArtworkForSong(songName:String):Void {
             for (i in 0...checkboxGroup.members.length) {
                 var cbk:CheckboxThingie = checkboxGroup.members[i];
                 if (cbk == null) continue;
-                var hoverK:Bool = cbk.overlapsPoint(mouseScreen);
-                if (!hoverK) hoverK = isMouseInExpandedRect(cbk, mx, my, clickMargin);
+                var hoverK:Bool = isMouseInExpandedRect(cbk, mx, my, clickMargin);
                 var lblK:FlxText = labelGroup.members[i];
                 if (lblK != null) hoverK = hoverK || lblK.overlapsPoint(mouseScreen);
                 if (hoverK) {
@@ -558,9 +571,7 @@ public function updateArtworkForSong(songName:String):Void {
                         var newValK = !(optK.getValue() == true);
                         optK.setValue(newValK);
                         optK.change();
-                        cbk.daValue = newValK;
-                        setCheckboxVisual(cbk, newValK);
-                        cbk.updateHitbox();
+                        cbk.daValue = newValK; // déclenche déjà, via le setter, la bonne animation + le bon offset
                         changed = true;
                     }
                     break;
@@ -640,4 +651,22 @@ class ArtworkGameplayOption {
     public function change():Void {
         if (onChange != null) onChange();
     }
+}
+
+
+/* --------------------------
+   Données d'artwork (voir ARTWORKS)
+   -------------------------- */
+typedef ArtworkVariant = {
+    ?art:String,
+    ?text:String,
+    ?desc:String
+}
+
+typedef ArtworkEntry = {
+    ?art:String,
+    ?text:String,
+    ?desc:String,
+    ?levels:Map<String, Int>,
+    ?variants:Map<String, ArtworkVariant>
 }

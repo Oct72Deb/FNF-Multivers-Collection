@@ -56,22 +56,22 @@ class Highscore
 	{
 		var daSong:String = formatSong(song, diff);
 
-		// Le score et la précision ne sont mis à jour que si c'est un nouveau record.
+		// Score, précision, misses et rang ne sont mis à jour que si c'est un nouveau record.
+		// (avant, misses/rang étaient écrasés à chaque partie, même en cas de score inférieur)
 		if (songScores.exists(daSong)) {
 			if (songScores.get(daSong) < score) {
 				setScore(daSong, score);
 				if(rating >= 0) setRating(daSong, rating);
+				if(misses >= 0) setMisses(daSong, misses);
+				if(rank != null) setRank(daSong, rank);
 			}
 		}
 		else {
 			setScore(daSong, score);
 			if(rating >= 0) setRating(daSong, rating);
+			if(misses >= 0) setMisses(daSong, misses);
+			if(rank != null) setRank(daSong, rank);
 		}
-
-		// Les misses et le rang, eux, reflètent la dernière tentative jouée,
-		// qu'elle batte le record ou non.
-		if(misses >= 0) setMisses(daSong, misses);
-		if(rank != null) setRank(daSong, rank);
 	}
 
 	public static function saveWeekScore(week:String, score:Int = 0, ?diff:Int = 0):Void

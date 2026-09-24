@@ -10,8 +10,18 @@ class CheckboxThingie extends FlxSprite
 	public var copyAlpha:Bool = true;
 	public var offsetX:Float = 0;
 	public var offsetY:Float = 0;
-	public function new(x:Float = 0, y:Float = 0, ?checked = false) {
+
+	// Multiplicateur de taille appliqué à la construction (1 = taille d'origine, 0.6 = 60%, etc.)
+	// NE JAMAIS rescaler une CheckboxThingie après coup (cb.scale.set / cb.updateHitbox) :
+	// les offsets faits-main ci-dessous sont en pixels absolus à l'écran, pas relatifs à
+	// l'échelle du sprite. Il faut donc rétrécir ICI, une seule fois, à la construction,
+	// pour que les offsets soient recalculés à la même échelle en même temps que la taille.
+	var sizeMult:Float = 1;
+
+	public function new(x:Float = 0, y:Float = 0, ?checked = false, ?sizeMult:Float = 1) {
 		super(x, y);
+
+		this.sizeMult = sizeMult;
 
 		frames = Paths.getSparrowAtlas('checkboxanim');
 		animation.addByPrefix("unchecked", "checkbox0", 24, false);
@@ -20,7 +30,7 @@ class CheckboxThingie extends FlxSprite
 		animation.addByPrefix("checked", "checkbox finish", 24, false);
 
 		antialiasing = ClientPrefs.globalAntialiasing;
-		setGraphicSize(Std.int(0.9 * width));
+		setGraphicSize(Std.int(0.9 * sizeMult * width));
 		updateHitbox();
 
 		animationFinished(checked ? 'checking' : 'unchecking');
@@ -42,11 +52,11 @@ class CheckboxThingie extends FlxSprite
 		if(check) {
 			if(animation.curAnim.name != 'checked' && animation.curAnim.name != 'checking') {
 				animation.play('checking', true);
-				offset.set(34, 25);
+				offset.set(34 * sizeMult, 25 * sizeMult);
 			}
 		} else if(animation.curAnim.name != 'unchecked' && animation.curAnim.name != 'unchecking') {
 			animation.play("unchecking", true);
-			offset.set(25, 28);
+			offset.set(25 * sizeMult, 28 * sizeMult);
 		}
 		return check;
 	}
@@ -57,11 +67,11 @@ class CheckboxThingie extends FlxSprite
 		{
 			case 'checking':
 				animation.play('checked', true);
-				offset.set(3, 12);
+				offset.set(3 * sizeMult, 12 * sizeMult);
 
 			case 'unchecking':
 				animation.play('unchecked', true);
-				offset.set(0, 2);
+				offset.set(0 * sizeMult, 2 * sizeMult);
 		}
 	}
 }

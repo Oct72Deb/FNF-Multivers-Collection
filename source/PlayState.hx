@@ -222,6 +222,9 @@ class PlayState extends MusicBeatState
 	public var botplaySine:Float = 0;
 	public var botplayTxt:FlxText;
 
+	public var chartingSine:Float = 0;
+	public var chartingTxt:FlxText;
+
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
 	public var camHUD:FlxCamera;
@@ -274,6 +277,10 @@ class PlayState extends MusicBeatState
 	public var songScore:Int = 0;
 	public var songHits:Int = 0;
 	public var songMisses:Int = 0;
+	// Note "racine" (tête de la longue note) de chaque hold déjà comptabilisé comme raté,
+	// pour qu'une longue note manquée ne compte que comme 1 seul miss, peu importe le nombre
+	// de segments qui la composent.
+	var missedSustainRoots:Array<Note> = [];
 	public var scoreTxt:FlxText;
 	var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
@@ -1198,6 +1205,16 @@ class PlayState extends MusicBeatState
 			botplayTxt.y = timeBarBG.y - 78;
 		}
 
+		// Texte clignotant "CHARTING MODE" au dessus des fleches du joueur
+		// (la position est mise a jour dans update(), une fois les fleches creees)
+		chartingTxt = new FlxText(0, 0, 0, "CHARTING MODE", 32);
+		chartingTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		chartingTxt.scrollFactor.set();
+		chartingTxt.borderSize = 2;
+		chartingTxt.alpha = 0;
+		chartingTxt.visible = chartingMode;
+		add(chartingTxt);
+
 		strumLineNotes.cameras = [camHUD];
 		grpNoteSplashes.cameras = [camHUD];
 		notes.cameras = [camHUD];
@@ -1207,6 +1224,7 @@ class PlayState extends MusicBeatState
 		iconP2.cameras = [camHUD];
 		scoreTxt.cameras = [camHUD];
 		botplayTxt.cameras = [camHUD];
+		chartingTxt.cameras = [camHUD];
 		timeBar.cameras = [camHUD];
 		timeBarBG.cameras = [camHUD];
 		timeTxt.cameras = [camHUD];
@@ -3090,6 +3108,21 @@ if (OpenFlAssets.exists(file)) {
 			botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180);
 		}
 
+		if(chartingTxt != null && chartingTxt.visible) {
+			if(playerStrums != null && playerStrums.length > 0) {
+				// Centre le texte au dessus des 4 fleches du joueur
+				var firstStrum:StrumNote = playerStrums.members[0];
+				var lastStrum:StrumNote = playerStrums.members[playerStrums.length - 1];
+				chartingTxt.x = (firstStrum.x + lastStrum.x + lastStrum.width) / 2 - chartingTxt.width / 2;
+				chartingTxt.y = firstStrum.y - chartingTxt.height - 4;
+
+				chartingSine += 180 * elapsed;
+				chartingTxt.alpha = 0.6 + 0.4 * Math.sin((Math.PI * chartingSine) / 90);
+			} else {
+				chartingTxt.alpha = 0; // les fleches n'existent pas encore
+			}
+		}
+
 		if (controls.PAUSE && startedCountdown && canPause)
 		{
 			var ret:Dynamic = callOnLuas('onPause', [], false);
@@ -3389,6 +3422,7 @@ if (OpenFlAssets.exists(file)) {
 				totalPlayed = Std.int(Math.max(totalPlayed, 1));
 				totalNotesHit = totalPlayed;
 				songMisses = 0;
+				missedSustainRoots = [];
 
 				// Score placeholder, à remplacer par une vraie valeur si besoin.
 				songScore = 100000;
@@ -4302,6 +4336,17 @@ if (SONG.validScore)
 		});
 	}
 
+	// Donne du score à chaque segment tenu d'une longue note, de façon simple et progressive,
+	// à l'inverse du malus fixe appliqué à chaque segment raté (songScore -= 10 dans noteMiss) :
+	// pas de popup de note/combo/splash et pas d'impact sur totalPlayed/songHits (sinon les
+	// longues notes fausseraient les stats de précision et spammeraient l'écran).
+	private function sustainNoteScore(note:Note):Void
+	{
+		if (practiceMode || cpuControlled) return;
+
+		songScore += 10;
+	}
+
 	public var strumsBlocked:Array<Bool> = [];
 	private function onKeyPress(event:KeyboardEvent):Void
 	{
@@ -4510,7 +4555,19 @@ if (SONG.validScore)
 			}
 		});
 		combo = 0;
-		health -= daNote.missHealth * healthLoss;
+		// Une longue note ratée ne doit retirer que l'équivalent d'une note normale,
+		// pas une perte de vie par segment (le score, lui, n'est pas modifié).
+		if (!daNote.isSustainNote)
+		{
+			health -= daNote.missHealth * healthLoss;
+		}
+		else if (daNote.prevNote != null && daNote.prevNote.wasGoodHit)
+		{
+			// On tenait bien la note puis on l'a relâchée en cours de route : petite pénalité
+			// appliquée une seule fois au moment du relâchement (le segment suivant, lui,
+			// n'a pas prevNote.wasGoodHit == true, donc pas de pénalité répétée après ça).
+			health -= daNote.missHealth * healthLoss * 0.5;
+		}
 		
 		if(instakillOnMiss)
 		{
@@ -4520,9 +4577,36 @@ if (SONG.validScore)
 
 		//For testing purposes
 		//trace(daNote.missHealth);
-		songMisses++;
-		vocals.volume = 0;
+
+		// Une longue note ratée ne doit compter que comme 1 seul miss, même si elle est
+		// composée de plusieurs segments (tête + segments de sustain) qui se font tous
+		// rater les uns après les autres. On identifie la "racine" du hold (la tête de note)
+		// aussi bien quand c'est elle-même qui est ratée que quand c'est un de ses segments,
+		// pour que le premier miss (souvent la tête, qui n'est pas isSustainNote) soit bien
+		// reconnu par les segments suivants.
+		var sustainRoot:Note = daNote.isSustainNote ? daNote.parent : daNote;
+		var countThisMiss:Bool = true;
+		if (sustainRoot != null)
+		{
+			if (missedSustainRoots.indexOf(sustainRoot) != -1)
+			{
+				countThisMiss = false;
+			}
+			else
+			{
+				missedSustainRoots.push(sustainRoot);
+			}
+		}
+
+		if (countThisMiss)
+		{
+			songMisses++;
+		}
+
+		// Le score, lui, baisse à chaque segment raté comme dans l'ancienne version,
+		// peu importe qu'il compte ou non comme un miss "affiché".
 		if(!practiceMode) songScore -= 10;
+		vocals.volume = 0;
 
 		totalPlayed++;
 		RecalculateRating(true);
@@ -4684,7 +4768,19 @@ if (SONG.validScore)
 				if(combo > 9999) combo = 9999;
 				popUpScore(note);
 			}
-			health += note.hitHealth * healthGain;
+			else
+			{
+				// Chaque segment tenu d'une longue note rapporte du score, mais sans popup de
+				// note/splash ni incrément de combo/précision à chaque petit tick, pour ne pas
+				// polluer l'écran ni fausser les stats de précision.
+				sustainNoteScore(note);
+			}
+			// Une longue note ne doit faire gagner de la vie qu'une seule fois (comme une note normale),
+			// pas à chaque petit segment tenu pendant le hold.
+			if (!note.isSustainNote)
+			{
+				health += note.hitHealth * healthGain;
+			}
 
 			if(!note.noAnimation) {
 				var animToPlay:String = singAnimations[Std.int(Math.abs(note.noteData))];

@@ -2,6 +2,7 @@ package states;
 
 #if desktop
 import Discord.DiscordClient;
+import StringTools;
 #end
 
 import states.MainMenuState;
@@ -82,12 +83,14 @@ class FloatingHeart extends FlxSprite
 	var patternPath:String;
 	var goingRight:Bool;
 	var canSpin:Bool; // si true, ce sprite a une chance de tourner sur lui-même en continu
+	var higherOpacity:Bool; // si true, la plage d'opacité (base + respiration) est plus élevée que la normale
 
-	public function new(patternPath:String, canSpin:Bool = false)
+	public function new(patternPath:String, canSpin:Bool = false, higherOpacity:Bool = false)
 	{
 		super();
 		this.patternPath = patternPath;
 		this.canSpin = canSpin;
+		this.higherOpacity = higherOpacity;
 		// Chargé UNE SEULE fois ici (au lieu de le refaire à chaque respawn plus bas) :
 		// l'image ne change jamais pour ce sprite pendant toute sa durée de vie.
 		loadGraphic(Paths.image(patternPath));
@@ -100,7 +103,11 @@ class FloatingHeart extends FlxSprite
 	public function respawn(initial:Bool = false):Void
 	{
 		angle = FlxG.random.float(-15, 15);
-		alpha = FlxG.random.float(0.15, 0.35);
+
+		if (higherOpacity)
+			alpha = FlxG.random.float(0.5, 0.75); // plage plus élevée que les autres motifs
+		else
+			alpha = FlxG.random.float(0.15, 0.35);
 
 		var randScale:Float = FlxG.random.float(0.25, 0.65);
 		scale.set(randScale, randScale);
@@ -127,7 +134,7 @@ class FloatingHeart extends FlxSprite
 			startDelay: FlxG.random.float(0, 1.5)
 		});
 
-		// Légère "respiration" de la transparence
+		// Légère "respiration" de la transparence (comme pour les autres motifs, mais sur une plage plus haute pour higherOpacity)
 		FlxTween.cancelTweensOf(this, ["alpha"]);
 		FlxTween.tween(this, {alpha: alpha + FlxG.random.float(0.1, 0.2)}, FlxG.random.float(1.5, 3), {
 			ease: FlxEase.quadInOut,
@@ -158,6 +165,16 @@ class FloatingHeart extends FlxSprite
 			respawn();
 		else if (!goingRight && x + width < -60)
 			respawn();
+	}
+
+	// IMPORTANT : les tweens créés dans respawn() sont en PINGPONG/LOOPING, donc à durée infinie.
+	// Sans cet override, FlxState.destroy() détruit bien ce sprite, mais le FlxTweenManager global
+	// continue de faire vivre les tweens qui le référencent encore -> le sprite ne peut jamais être
+	// garbage-collecté, et un nouveau lot s'accumule à chaque aller-retour dans le menu (fuite mémoire).
+	override public function destroy():Void
+	{
+		FlxTween.cancelTweensOf(this);
+		super.destroy();
 	}
 }
 
@@ -191,13 +208,29 @@ class MainMenuState extends MusicBeatState
 	static inline var GALLERY_LOCKED_TEXT:String = "Please complete all the songs tracks to access the gallery.";
 
 	// --- Système d'image décorative aléatoire au menu ---
-	var artworkFolder:String = 'menuartworks'; 
+	// L'artwork de chaque personnage est rangé avec ses autres images de fond :
+	//   images/menuBG/<nom>/<nom>.png   (ex: images/menuBG/metal/metal.png)
+	// Chaque sous-dossier de menuBG contenant "<nom>.png" (ou .jpg/.jpeg) est un personnage.
+	// menuArtworkKey() est la SEULE source de vérité pour ce chemin (aussi utilisée par GalleryState) :
+	// pour changer le nom du fichier (ex: "artwork.png"), ne modifier que cette fonction.
+	public static inline var MENU_ARTWORK_FOLDER:String = 'menuBG';
+	public static function menuArtworkKey(name:String):String
+	{
+		return MENU_ARTWORK_FOLDER + '/' + name + '/' + name;
+	}
+	var artworkFolder:String = MENU_ARTWORK_FOLDER;
 	// Liste des noms de personnages disponibles (ex: ['kat', 'sackboy', 'metal']), utilisée
 	// comme cheat codes clavier pour forcer le chargement d'un fond précis (voir update()).
 	var artworkCheatNames:Array<String> = [];
 
+	// Cache statique du scan disque de artworkFolder : la liste des artworks ne change pas
+	// en cours de session (hors changement de mod actif), donc on ne la calcule qu'une fois
+	// au lieu de refaire un sys.FileSystem.readDirectory() à CHAQUE retour au menu principal.
+	static var cachedArtworkNames:Array<String> = null;
+	static var cachedArtworkFolder:String = null;
+
 	var artworkSettings:Map<String, MenuArtworkConfig> = [
-		'oceane' => {x: 450, y: 50, scale: 0.5},
+		'oceane' => {x: 700, y: 50, scale: 0.8},
 		'sackboy' => {x: 750, y: 150, scale: 0.7},
 		'metal' => {x: 650, y: 50, scale: 0.7},
 	];
@@ -293,8 +326,12 @@ class MainMenuState extends MusicBeatState
 
 		var group:FlxTypedGroup<FlxSprite> = new FlxTypedGroup<FlxSprite>();
 		for (path in lastStarPaths)
+		{
+			// "star2" doit rester à 100% d'opacité en permanence, sans variation
+			var isStar2:Bool = StringTools.endsWith(path, "/star2");
 			for (i in 0...countEach)
-				group.add(new FloatingHeart(path)); // même fonctionnement que "heart" : pas de rotation continue
+				group.add(new FloatingHeart(path, false, isStar2)); // même fonctionnement que "heart" : pas de rotation continue
+		}
 		return group;
 	}
 
@@ -327,7 +364,8 @@ class MainMenuState extends MusicBeatState
 		debugKeys = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('debug_1'));
 
 		// Liste à jour des personnages disponibles, pour les cheat codes de sélection manuelle du fond
-		artworkCheatNames = scanMenuArtworkNames(artworkFolder);
+		// (passe par le cache statique, voir scanMenuArtworkNamesCached())
+		artworkCheatNames = scanMenuArtworkNamesCached(artworkFolder);
 
 		camGame = new FlxCamera();
 		camAchievement = new FlxCamera();
@@ -482,9 +520,12 @@ if (foundStarPaths.length > 0)
 
     for (path in foundStarPaths)
     {
+        // "star2" doit rester à 100% d'opacité en permanence, sans variation
+        var isStar2:Bool = (path == 'menuBG/' + artworkName + '/star2');
+
         for (i in 0...starCountEach)
         {
-            var star:FloatingHeart = new FloatingHeart(path); // pas de canSpin=true : comportement identique à "heart"
+            var star:FloatingHeart = new FloatingHeart(path, false, isStar2); // pas de canSpin=true : comportement identique à "heart"
             star.scrollFactor.set(0, yScroll);
             bgPatternStar.add(star);
         }
@@ -500,7 +541,7 @@ if (foundStarPaths.length > 0)
 			{x: artworkDefaultX, y: artworkDefaultY, scale: artworkDefaultScale};
 
 		var menuArtwork:FlxSprite = new FlxSprite(artworkCfg.x, artworkCfg.y);
-		menuArtwork.loadGraphic(Paths.image(artworkFolder + '/' + artworkName));
+		menuArtwork.loadGraphic(Paths.image(menuArtworkKey(artworkName)));
 		menuArtwork.setGraphicSize(Std.int(menuArtwork.width * artworkCfg.scale));
 		menuArtwork.updateHitbox();
 		menuArtwork.antialiasing = ClientPrefs.globalAntialiasing;
@@ -810,11 +851,11 @@ menuItem.animation.addByPrefix('confirm', 'confirm', 24, false); // false pour n
 		// Le jeu va maintenant choisir un personnage différent à CHAQUE FOIS
 		// qu'on quitte un sous-menu ou au démarrage !
 
-		var files:Array<String> = scanMenuArtworkNames(folder);
+		var files:Array<String> = scanMenuArtworkNamesCached(folder);
 
 		if (files.length == 0)
 		{
-			trace('[MainMenuState] Aucune image trouvée dans assets/images/' + folder + '/, vérifie le chemin.');
+			trace('[MainMenuState] Aucun personnage trouvé : il faut mods/images/' + folder + '/<nom>/<nom>.png (ou dans assets/images/), vérifie le chemin.');
 			chosenArtwork = 'kat';
 			return chosenArtwork;
 		}
@@ -860,22 +901,61 @@ menuItem.animation.addByPrefix('confirm', 'confirm', 24, false); // false pour n
 		return icon;
 	}
 
+	// Version mise en cache de scanMenuArtworkNames() : le scan disque réel n'est fait
+	// qu'une seule fois par dossier (premier appel), puis le résultat est réutilisé pour
+	// tous les create() suivants du menu principal. Se réinitialise automatiquement si
+	// jamais le dossier demandé change (changement de mod, etc.).
+	function scanMenuArtworkNamesCached(folder:String):Array<String>
+	{
+		if (cachedArtworkNames == null || cachedArtworkFolder != folder)
+		{
+			cachedArtworkNames = scanMenuArtworkNames(folder);
+			cachedArtworkFolder = folder;
+		}
+		return cachedArtworkNames;
+	}
+
 	// Scanne le dossier des artworks et renvoie la liste de tous les noms de personnages
 	// disponibles (sans extension), en minuscules. Utilisé par le tirage aléatoire ci-dessus
 	// ET par les cheat codes de sélection manuelle du fond (voir update()).
+	// NE PLUS APPELER DIRECTEMENT ailleurs que depuis scanMenuArtworkNamesCached() ci-dessus :
+	// c'est un vrai accès disque, à réserver au premier scan.
 	function scanMenuArtworkNames(folder:String):Array<String>
 	{
 		var files:Array<String> = [];
 
 		#if sys
-		var dirPath:String = 'assets/images/' + folder + '/';
-		if (sys.FileSystem.exists(dirPath))
+		// Un personnage = un sous-dossier <folder>/<nom>/ qui contient son artwork "<nom>.png"
+		// (voir menuArtworkKey()). Les sous-dossiers sans artwork (ex: fond seul) sont ignorés.
+		// Racines "images/" scannées, par ordre de priorité (les doublons de nom sont ignorés) :
+		//  1. mods/images/                -> emplacement voulu
+		//  2. mods/<mod actif>/images/    -> via Paths.modFolders (si le dossier est dans un mod)
+		//  3. assets/images/              -> repli sur l'ancien emplacement
+		var imageRoots:Array<String> = ['mods/images/'];
+		#if MODS_ALLOWED
+		imageRoots.push(Paths.modFolders('images') + '/');
+		#end
+		imageRoots.push('assets/images/');
+
+		for (imgRoot in imageRoots)
 		{
-			for (file in sys.FileSystem.readDirectory(dirPath))
+			var dirPath:String = imgRoot + folder + '/';
+			if (!sys.FileSystem.exists(dirPath) || !sys.FileSystem.isDirectory(dirPath))
+				continue;
+
+			for (name in sys.FileSystem.readDirectory(dirPath))
 			{
-				var ext:String = file.substr(file.lastIndexOf('.') + 1).toLowerCase();
-				if (ext == 'png' || ext == 'jpg' || ext == 'jpeg')
-					files.push(file.substr(0, file.lastIndexOf('.')));
+				if (files.indexOf(name) != -1)
+					continue;
+
+				for (ext in ['png', 'jpg', 'jpeg'])
+				{
+					if (sys.FileSystem.exists(imgRoot + menuArtworkKey(name) + '.' + ext))
+					{
+						files.push(name);
+						break;
+					}
+				}
 			}
 		}
 		#end

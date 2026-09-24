@@ -439,6 +439,74 @@ inline static public function inst(song:String, ?diffSuffix:String = ''):Any
 		return currentTrackedSounds.get(gottenPath);
 	}
 
+	// ==================================================================
+	// Précache asynchrone pour les sons (utilisé pour éviter les freezes
+	// au changement d'instrumentale en Freeplay). Ces 3 fonctions dupliquent
+	// volontairement la logique de résolution de chemin de returnSound(),
+	// mais SANS jamais faire le Sound.fromFile()/getSound() bloquant sur
+	// le thread principal.
+	// ==================================================================
+
+	// Path(s) actuellement en cours de chargement en arrière-plan, pour ne
+	// jamais lancer deux Threads sur le même fichier en même temps.
+	public static var soundsLoading:Map<String, Bool> = [];
+
+	// Calcule la même clé de cache que returnSound() utiliserait pour ce
+	// (path, key, library), SANS charger le son. Sert uniquement à savoir
+	// si le son est déjà prêt en mémoire.
+	public static function resolveSoundPath(path:String, key:String, ?library:String):String
+	{
+		#if MODS_ALLOWED
+		var file:String = modsSounds(path, key);
+		if (FileSystem.exists(file))
+			return file;
+		#end
+
+		var gottenPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
+		gottenPath = gottenPath.substring(gottenPath.indexOf(':') + 1, gottenPath.length);
+		return gottenPath;
+	}
+
+	// True si le son est déjà décodé et disponible dans currentTrackedSounds
+	// (donc si returnSound()/Paths.inst() serait instantané pour ce son).
+	public static function isSoundCached(path:String, key:String, ?library:String):Bool
+	{
+		return currentTrackedSounds.exists(resolveSoundPath(path, key, library));
+	}
+
+	// Lance le chargement du son en arrière-plan s'il n'est pas déjà en cache
+	// ou en cours de chargement. Ne bloque jamais le thread principal.
+	// NOTE : la branche MODS_ALLOWED (Sound.fromFile) est celle utilisée pour
+	// quasiment tous les sons de mods (dont les Inst de Freeplay) et est déjà
+	// éprouvée hors thread principal ailleurs dans le moteur. La branche de
+	// repli OpenFlAssets.getSound (assets embarqués, hors dossier mods) est
+	// moins testée hors thread principal : si jamais elle pose problème sur
+	// ta cible (crash/corruption), le plus simple est de retirer ce cas-là
+	// et de laisser ces sons-là passer par returnSound() classique.
+	public static function cacheSoundAsync(path:String, key:String, ?library:String):Void
+	{
+		var resolved:String = resolveSoundPath(path, key, library);
+		if (currentTrackedSounds.exists(resolved) || soundsLoading.exists(resolved))
+			return;
+
+		soundsLoading.set(resolved, true);
+		sys.thread.Thread.create(function()
+		{
+			#if MODS_ALLOWED
+			if (FileSystem.exists(resolved))
+			{
+				currentTrackedSounds.set(resolved, Sound.fromFile(resolved));
+				soundsLoading.remove(resolved);
+				return;
+			}
+			#end
+
+			var folder:String = (path == 'songs') ? 'songs:' : '';
+			currentTrackedSounds.set(resolved, OpenFlAssets.getSound(folder + getPath('$path/$key.$SOUND_EXT', SOUND, library)));
+			soundsLoading.remove(resolved);
+		});
+	}
+
 	#if MODS_ALLOWED
 	inline static public function mods(key:String = '') {
 		return 'mods/' + key;

@@ -34,7 +34,7 @@ import Controls;
 using StringTools;
 class OptionsState extends MusicBeatState
 {
-	var options:Array<String> = ['Note Colors', 'Controls', 'Adjust Delay and Combo', 'Graphics', 'Visuals and UI', 'Gameplay'];
+	var options:Array<String> = ['Note Colors', 'Controls', 'Adjust Delay', 'Graphics', 'Visuals and UI', 'Gameplay'];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
 	public static var menuBG:FlxSprite;
@@ -51,22 +51,25 @@ class OptionsState extends MusicBeatState
 				openSubState(new options.VisualsUISubState());
 			case 'Gameplay':
 				openSubState(new options.GameplaySettingsSubState());
-			case 'Adjust Delay and Combo':
+			case 'Adjust Delay':
 				LoadingState.loadAndSwitchState(new options.NoteOffsetState());
 		}
 	}
 
 	var selectorLeft:Alphabet;
 	var selectorRight:Alphabet;
+	var menuItemsHidden:Bool = false; // true tant qu'un sous-menu d'options est ouvert par-dessus
 
 	override function create() {
 		#if desktop
 		DiscordClient.changePresence("Options Menu", null);
 		#end
 
+		// Garde cet état actif pendant qu'un sous-menu est ouvert par-dessus : les particules continuent de bouger
+		persistentUpdate = true;
+
 		// Même fond que celui affiché derrière le personnage dans le menu principal (mis en cache par MainMenuState)
 		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image(MainMenuState.lastBgGraphicPath));
-		bg.color = 0xFFea71fd;
 		bg.updateHitbox();
 
 		bg.screenCenter();
@@ -103,8 +106,33 @@ class OptionsState extends MusicBeatState
 		ClientPrefs.saveSettings();
 	}
 
+	// true uniquement si le sous-état ouvert est l'un des sous-menus d'options (et PAS, par exemple,
+	// le fondu CustomFadeTransition d'entrée/sortie, qui est aussi un sous-état de cet état).
+	function isOptionsSubStateOpen():Bool {
+		return subState != null && (Std.downcast(subState, BaseOptionsMenu) != null
+			|| Std.downcast(subState, ControlsSubState) != null
+			|| Std.downcast(subState, NotesSubState) != null);
+	}
+
+	// Les sous-menus ont un fond transparent : on cache la liste des options (mais pas le fond ni les
+	// particules) tant que l'un d'eux est ouvert. Fait dans draw() pour rester synchrone avec
+	// l'ouverture/fermeture réelle du sous-menu.
+	override function draw() {
+		var hide:Bool = isOptionsSubStateOpen();
+		if (menuItemsHidden != hide) {
+			menuItemsHidden = hide;
+			grpOptions.visible = !hide;
+			selectorLeft.visible = !hide;
+			selectorRight.visible = !hide;
+		}
+		super.draw();
+	}
+
 	override function update(elapsed:Float) {
 		super.update(elapsed);
+
+		// Un sous-menu est ouvert : ses propres touches ne doivent pas déclencher celles d'ici
+		if (subState != null) return;
 
 		if (controls.UI_UP_P) {
 			changeSelection(-1);
