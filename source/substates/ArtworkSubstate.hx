@@ -8,6 +8,7 @@ import flixel.FlxSprite;
 import flixel.FlxSubState;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import flixel.util.FlxSpriteUtil;
 import flixel.math.FlxMath;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import Paths;
@@ -31,8 +32,26 @@ class ArtworkSubstate extends FlxSubState {
     var targetX:Float;
     var bg:FlxSprite;
     var artImage:FlxSprite;
+    var descBg:FlxSprite;
     var artDesc:FlxText;
     var artText:FlxText;
+    var panelW:Int;
+    var panelH:Int;
+    var currentAccent:FlxColor = DESC_ACCENT;
+    static inline var DESC_ACCENT:FlxColor = 0xFFF5C542; // doré, couleur d'accent par défaut du panneau
+
+    // Grille d'espacement du panneau description : valeurs fixes et réutilisées
+    // partout (création ET recalcul), pour que padding/marges restent toujours
+    // identiques quel que soit le texte affiché.
+    static inline var PANEL_MARGIN_LEFT:Float = 20;   // distance au bord gauche de l'écran
+    static inline var PANEL_MARGIN_BOTTOM:Float = 20; // distance au bord bas de l'écran
+    static inline var PANEL_WIDTH_RATIO:Float = 0.46; // largeur du panneau = % de FlxG.width
+    static inline var PANEL_PAD_X:Float = 20;         // padding horizontal intérieur
+    static inline var PANEL_PAD_TOP:Float = 16;        // padding avant la 1ère ligne
+    static inline var PANEL_PAD_BOTTOM:Float = 16;     // padding après la dernière ligne
+    static inline var PANEL_GAP_Y:Float = 8;          // espace entre les 2 lignes de texte
+    static inline var PANEL_CORNER_RADIUS:Float = 14;
+    static inline var PANEL_BORDER_THICKNESS:Float = 2;
 
     // Difficulty bar
     var barBg:FlxSprite;
@@ -41,11 +60,22 @@ class ArtworkSubstate extends FlxSubState {
     var barCurrentPercent:Float = 0;
     var barTargetPercent:Float = 0;
 
+    // Colonne de droite (poster + barre de difficulté + checkboxes) : une seule
+    // grille pour les 3, avec la même marge gauche/droite partout, pour que tout
+    // reste aligné quel que soit l'artwork affiché.
+    static inline var COLUMN_PAD_X:Float = 45;          // marge gauche/droite à l'intérieur de bg
+    static inline var POSTER_TOP_Y:Float = 138;         // haut de la zone réservée au poster
+    static inline var POSTER_MAX_HEIGHT:Float = 335;    // hauteur max de cette zone
+    static inline var GAP_POSTER_TO_BAR:Float = 22;      // espace entre le bas du poster et la barre
+    static inline var BAR_HEIGHT:Float = 18;
+    static inline var GAP_BAR_TO_CHECKBOXES:Float = 6;  // espace entre la barre et la 1ère checkbox
+
     private var optionsArray:Array<ArtworkGameplayOption> = [];
     public var currentWeek:String;
 
     private var _initSongName:String = "";
     private var _initDifficulty:Int = 1;
+    private var _initColor:FlxColor = DESC_ACCENT; // couleur de la chanson passée au constructeur (fallback doré si absente)
 
     var songKey:String = null; 
     var entry:ArtworkEntry = null;
@@ -55,21 +85,22 @@ class ArtworkSubstate extends FlxSubState {
     var labelOffsetX:Float = 42; 
     var labelOffsetY:Float = 10;
 
-    var checkboxSizeMult:Float = 0.5;
+    var checkboxSizeMult:Float = 0.6;
 
     var gapY:Float = 100;         
     // ----------------------------
 
-    public function new(week:String, songName:String = "", difficulty:Int = 1) {
+    public function new(week:String, songName:String = "", difficulty:Int = 1, ?color:FlxColor) {
         super();
         currentWeek = week;
         _initSongName = songName;
         _initDifficulty = difficulty;
+        if (color != null) _initColor = color;
         persistentUpdate = true;
         persistentDraw = true;
     }
 
-    static final ARTWORKS:Map<String, ArtworkEntry> = [
+    public static final ARTWORKS:Map<String, ArtworkEntry> = [
 
         "how to play" => {
             text: "Don't know how to play? No problem! The Mario Bros. are here for you!",
@@ -151,7 +182,7 @@ class ArtworkSubstate extends FlxSubState {
     // pour que "How To Play", "how to play" et "how-to-play" soient équivalents.
     static var lookup:Map<String, ArtworkEntry> = null;
 
-    static function findEntry(key:String):ArtworkEntry {
+    public static function findEntry(key:String):ArtworkEntry {
         if (lookup == null) {
             lookup = new Map<String, ArtworkEntry>();
             for (name => e in ARTWORKS)
@@ -171,26 +202,42 @@ class ArtworkSubstate extends FlxSubState {
             .makeGraphic(Std.int(FlxG.width * 0.35), FlxG.height, FlxColor.fromRGB(0, 0, 0, 0));
         add(bg);
 
-        artImage = new FlxSprite(bg.x + 60, 180);
+        artImage = new FlxSprite(0, POSTER_TOP_Y);
         add(artImage);
 
-        barMaxWidth = Std.int(bg.width - 120);
+        var columnX:Float = bg.x + COLUMN_PAD_X;
+        var columnWidth:Float = bg.width - COLUMN_PAD_X * 2;
+        barMaxWidth = Std.int(columnWidth);
 
-        barBg = new FlxSprite(bg.x + 45, 110)
-            .makeGraphic(barMaxWidth, 20, FlxColor.fromRGB(40, 40, 40));
+        // Barre de difficulté SOUS le poster (et non au-dessus), comme sur le concept art
+        var barY:Float = POSTER_TOP_Y + POSTER_MAX_HEIGHT + GAP_POSTER_TO_BAR;
+
+        barBg = new FlxSprite(columnX, barY)
+            .makeGraphic(barMaxWidth, Std.int(BAR_HEIGHT), FlxColor.fromRGB(40, 40, 40));
         add(barBg);
 
-        barFill = new FlxSprite(bg.x + 45, 110)
-            .makeGraphic(1, 20, FlxColor.GREEN);
+        barFill = new FlxSprite(columnX, barY)
+            .makeGraphic(1, Std.int(BAR_HEIGHT), FlxColor.GREEN);
         add(barFill);
 
-        artDesc = new FlxText(bg.x + 25, 495, bg.width - 80, "", 16);
-        artDesc.setFormat(null, 16, FlxColor.WHITE, "center");
+        // --- Bandeau description en bas à gauche de l'écran (VS/BPM + texte), ---
+        // --- séparé du poster comme sur le concept art papier.                 ---
+        panelW = Std.int(FlxG.width * PANEL_WIDTH_RATIO);
+        var textWidth:Int = panelW - Std.int(PANEL_PAD_X * 2);
+
+        descBg = new FlxSprite();
+        add(descBg);
+
+        artDesc = new FlxText(0, 0, textWidth, "", 18);
+        artDesc.setFormat(null, 18, FlxColor.WHITE, "left");
         add(artDesc);
 
-        artText = new FlxText(bg.x + 25, 525, bg.width - 80, "", 20);
-        artText.setFormat(null, 15, FlxColor.WHITE, "center");
+        artText = new FlxText(0, 0, textWidth, "", 16);
+        artText.setFormat(null, 16, FlxColor.WHITE, "left");
         add(artText);
+
+        layoutDescPanel(); // position/taille initiales (texte encore vide à ce stade)
+        // ------------------------------------------------------------------------
 
         checkboxGroup = new FlxTypedGroup<CheckboxThingie>();
         add(checkboxGroup);
@@ -200,8 +247,8 @@ class ArtworkSubstate extends FlxSubState {
 
         getOptions();
 
-        var baseX:Float = bg.x + 40 - 20;   // +10px vers la droite
-        var baseY:Float = bg.y + 580 - 20;  // -20px vers le haut
+        var baseX:Float = columnX;
+        var baseY:Float = barY + BAR_HEIGHT + GAP_BAR_TO_CHECKBOXES;
         var id:Int = 0;
         var cbGapY:Float = 56; // valeur de repli, écrasée dès la 1ère checkbox créée (voir plus bas)
         for (opt in optionsArray) {
@@ -248,7 +295,7 @@ class ArtworkSubstate extends FlxSubState {
         // updateArtworkForSong() juste après. On applique donc ici les valeurs reçues par
         // le constructeur, quand tous les sprites existent.
         if (_initSongName != "")
-            updateArtworkForSong(_initSongName);
+            updateArtworkForSong(_initSongName, _initColor);
         setDifficulty(_initDifficulty);
     }
 
@@ -281,7 +328,7 @@ class ArtworkSubstate extends FlxSubState {
     }
 
     // Appelé par FreeplayState quand la chanson sélectionnée change
-    public function updateArtworkForSong(songName:String):Void {
+    public function updateArtworkForSong(songName:String, ?color:FlxColor):Void {
         var key = Paths.formatToSongPath(songName);
 
         // Même chanson et image déjà chargée : on évite de relancer le slide et le rechargement.
@@ -290,6 +337,32 @@ class ArtworkSubstate extends FlxSubState {
         songKey = key;
         entry = findEntry(key);
         showArtwork();
+
+        currentAccent = (color != null) ? color : DESC_ACCENT;
+        layoutDescPanel();
+    }
+
+    // Recalcule taille + position du panneau à partir de la hauteur RÉELLE du texte
+    // actuellement affiché (artDesc/artText), en appliquant toujours le même padding
+    // (PANEL_PAD_*). Le panneau reste donc ajusté au contenu (jamais plus gros que
+    // nécessaire) sans que le texte ne bouge d'un pixel d'un appel à l'autre.
+    function layoutDescPanel():Void {
+        panelH = Std.int(PANEL_PAD_TOP + artDesc.height + PANEL_GAP_Y + artText.height + PANEL_PAD_BOTTOM);
+
+        var panelX:Float = PANEL_MARGIN_LEFT;
+        var panelY:Float = FlxG.height - PANEL_MARGIN_BOTTOM - panelH;
+
+        descBg.setPosition(panelX, panelY);
+        descBg.makeGraphic(panelW, panelH, FlxColor.TRANSPARENT, true);
+        FlxSpriteUtil.drawRoundRect(descBg, 0, 0, panelW, panelH, PANEL_CORNER_RADIUS, PANEL_CORNER_RADIUS,
+            FlxColor.fromRGB(12, 14, 26, 190),
+            { thickness: PANEL_BORDER_THICKNESS, color: currentAccent });
+
+        artDesc.x = panelX + PANEL_PAD_X;
+        artDesc.y = panelY + PANEL_PAD_TOP;
+
+        artText.x = panelX + PANEL_PAD_X;
+        artText.y = artDesc.y + artDesc.height + PANEL_GAP_Y;
     }
 
     // Surcharge éventuelle (art/text/desc) pour la difficulté courante
@@ -364,6 +437,9 @@ class ArtworkSubstate extends FlxSubState {
         // Met à jour text/desc uniquement si différents, indépendamment de l'artwork
         if (newText != oldText) artText.text = newText;
         if (newDesc != oldDesc) artDesc.text = newDesc;
+
+        if (newText != oldText || newDesc != oldDesc)
+            layoutDescPanel();
     }
 
     var isAnimating:Bool = false;
@@ -371,21 +447,33 @@ class ArtworkSubstate extends FlxSubState {
     var barLastFillWidth:Int = -1; // cache pour eviter de regenerer le graphic inutilement
 
     // ---------- BEAT-SYNC (bop de l'artwork sur la musique) ----------
-    var baseArtScale:Float = 0.33;   // scale de repos de l'artwork (repris de showArtwork)
+    var baseArtScale:Float = 0.33;   // recalculé pour chaque artwork dans showArtwork() (valeur de repli avant le 1er chargement)
     var lastBeat:Int = -1;           // dernier beat detecte, evite de re-trigger plusieurs fois
     var bopStrength:Float = 0.06;    // amplitude du "pop" sur le beat (0.12 = +12%)
     var bopEaseSpeed:Float = 0.20;   // vitesse de retour au scale normal (plus haut = plus rapide)
 
     public function showArtwork():Void {
         artImage.loadGraphic(Paths.image(getArtworkPath()));
+        artImage.scale.set(1, 1);
+        artImage.updateHitbox();
+
+        // Mise à l'échelle pour tenir dans la zone poster (largeur de colonne x hauteur
+        // max réservée), proportions conservées : chaque artwork, quelle que soit sa
+        // résolution source, occupe le même espace visuel et reste aligné avec la
+        // barre/les checkboxes en dessous.
+        var columnX:Float = bg.x + COLUMN_PAD_X;
+        var columnWidth:Float = bg.width - COLUMN_PAD_X * 2;
+        baseArtScale = Math.min(columnWidth / artImage.width, POSTER_MAX_HEIGHT / artImage.height);
+
         artImage.scale.set(baseArtScale, baseArtScale);
         artImage.updateHitbox();
-        artImage.screenCenter();
-        artImage.x += 400;
-        artImage.y += -40;
-        startX = artImage.x;
-        artImage.x = FlxG.width + artImage.width;
-        targetX = startX;
+
+        // Centré horizontalement dans la colonne, centré verticalement dans la zone poster
+        targetX = columnX + (columnWidth - artImage.width) / 2;
+        artImage.y = POSTER_TOP_Y + (POSTER_MAX_HEIGHT - artImage.height) / 2;
+
+        startX = targetX;
+        artImage.x = FlxG.width + artImage.width; // départ hors écran, glisse vers targetX
 
         updateDifficultyBar();
 
@@ -458,7 +546,7 @@ class ArtworkSubstate extends FlxSubState {
 
         // On ne regenere le bitmap que si sa largeur a reellement change (evite le makeGraphic() a chaque frame)
         if (fillWidth != barLastFillWidth) {
-            barFill.makeGraphic(fillWidth, 20, getBarColor(barCurrentPercent));
+            barFill.makeGraphic(fillWidth, Std.int(BAR_HEIGHT), getBarColor(barCurrentPercent));
             barLastFillWidth = fillWidth;
         }
 

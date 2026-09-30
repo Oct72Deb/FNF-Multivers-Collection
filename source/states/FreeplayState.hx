@@ -21,6 +21,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxTimer;
 import flixel.system.FlxSound;
 import flixel.input.keyboard.FlxKey;
+import flixel.util.FlxSpriteUtil;
 import sys.thread.Thread;
 import WeekData;
 #if MODS_ALLOWED
@@ -45,6 +46,17 @@ class FreeplayState extends MusicBeatState
 	var missesText:FlxText;
 	var rankText:FlxText;
 	var cheatHintText:FlxText;
+	var cheatHintBg:FlxSprite;
+	static inline var CHEAT_HINT_PAD:Float = 8; // marge autour du texte pour le fond
+
+	// --- Points sous "MISSES: x  RANK: y" : un point par difficulté disponible
+	// pour la chanson sélectionnée, celui de la difficulté courante étant coloré. ---
+	var diffDotsGroup:FlxTypedGroup<FlxSprite>;
+	static inline var DOT_RADIUS:Float = 5;
+	static inline var DOT_GAP:Float = 16;
+	static inline var DOT_COLOR_CURRENT:FlxColor = 0xFF46E2D2; // teal, comme sur le concept art
+	static inline var DOT_COLOR_OTHER:FlxColor = FlxColor.WHITE;
+	// -----------------------------------------------------------------------
 	static inline var CHEAT_HINT_MESSAGE:String = 'Type "victoire" on your keyboard to reset the score.';
 	static inline var CHEAT_SUCCESS_MESSAGE:String = 'Reset completed successfully.';
 	var lerpScore:Int = 0;
@@ -287,15 +299,24 @@ for (i in 0...WeekData.weeksList.length) {
 		add(rankText);
 		// -----------------------------------------------------
 
+		// --- Points de difficulté (voir déclaration du groupe plus haut) ---
+		diffDotsGroup = new FlxTypedGroup<FlxSprite>();
+		add(diffDotsGroup);
+		// --------------------------------------------------------------------
+
 		add(scoreText);
 
 		// --- Message d'astuce pour le cheat code de reset (bas droite) ---
-		cheatHintText = new FlxText(0, 0, 300, CHEAT_HINT_MESSAGE, 16);
-		cheatHintText.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT);
+		cheatHintBg = new FlxSprite();
+		cheatHintBg.scrollFactor.set();
+		add(cheatHintBg);
+
+		cheatHintText = new FlxText(0, 0, 0, CHEAT_HINT_MESSAGE, 13);
+		cheatHintText.setFormat(Paths.font("vcr.ttf"), 13, FlxColor.WHITE, RIGHT);
 		cheatHintText.scrollFactor.set();
-		cheatHintText.x = FlxG.width - cheatHintText.width - 10;
-		cheatHintText.y = FlxG.height - cheatHintText.height - 10;
 		add(cheatHintText);
+
+		setCheatHintMessage(CHEAT_HINT_MESSAGE);
 		// -------------------------------------------------------------
 
 		if(curSelected >= songs.length) curSelected = 0;
@@ -330,7 +351,7 @@ for (i in 0...WeekData.weeksList.length) {
 		// openSubState() diffère create() au tick suivant : appeler updateArtworkForSong()
 		// ou setDifficulty() ici causerait un Null Object Reference (artImage pas encore créé).
 		// ArtworkSubstate.create() applique ces valeurs lui-même en fin d'initialisation.
-		openSubState(new substates.ArtworkSubstate(weekName, songs[curSelected].songName, curDifficulty));
+		openSubState(new substates.ArtworkSubstate(weekName, songs[curSelected].songName, curDifficulty, songs[curSelected].color));
 	}
 
 	override function closeSubState() {
@@ -743,7 +764,7 @@ if (trackKey != instNamePlaying)
 
 			if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 				var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
-				artSub.updateArtworkForSong(songs[curSelected].songName);
+				artSub.updateArtworkForSong(songs[curSelected].songName, songs[curSelected].color);
 			}
 
 			if (trackKey == instNamePlaying)
@@ -878,6 +899,7 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 
 		PlayState.storyDifficulty = curDifficulty;
 		diffText.text = '< ' + CoolUtil.difficultyString() + ' >';
+		updateDifficultyDots();
 		positionHighscore();
 		notifyArtworkDifficulty();
 
@@ -921,14 +943,10 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 			cheatBuffer = "";
 
 			// Affiche le message de confirmation, puis revient au message d'astuce
-			cheatHintText.text = CHEAT_SUCCESS_MESSAGE;
-			cheatHintText.x = FlxG.width - cheatHintText.width - 10;
-			cheatHintText.y = FlxG.height - cheatHintText.height - 10;
+			setCheatHintMessage(CHEAT_SUCCESS_MESSAGE);
 			new FlxTimer().start(2, function(_)
 			{
-				cheatHintText.text = CHEAT_HINT_MESSAGE;
-				cheatHintText.x = FlxG.width - cheatHintText.width - 10;
-				cheatHintText.y = FlxG.height - cheatHintText.height - 10;
+				setCheatHintMessage(CHEAT_HINT_MESSAGE);
 			});
 		}
 	}
@@ -1046,6 +1064,8 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 			curDifficulty = newPos;
 		}
 
+		updateDifficultyDots();
+
 		prefetchNearbyInsts();
 	}
 
@@ -1111,6 +1131,26 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		Paths.currentModDirectory = savedModDir;
 	}
 
+	/**
+	 * Met à jour le texte du message d'astuce/cheat ET repositionne+redimensionne
+	 * son fond noir semi-transparent en conséquence (le texte n'a jamais une taille
+	 * fixe, donc le fond doit être recalculé à chaque changement de message).
+	 */
+	private function setCheatHintMessage(msg:String):Void
+	{
+		cheatHintText.text = msg;
+		cheatHintText.x = FlxG.width - cheatHintText.width - 10;
+		cheatHintText.y = FlxG.height - cheatHintText.height - 10;
+
+		cheatHintBg.makeGraphic(
+			Std.int(cheatHintText.width + CHEAT_HINT_PAD * 2),
+			Std.int(cheatHintText.height + CHEAT_HINT_PAD * 2),
+			FlxColor.fromRGB(0, 0, 0, 140)
+		);
+		cheatHintBg.x = cheatHintText.x - CHEAT_HINT_PAD;
+		cheatHintBg.y = cheatHintText.y - CHEAT_HINT_PAD;
+	}
+
 	private function positionHighscore() {
 		scoreText.x = FlxG.width - scoreText.width - 6;
 
@@ -1131,6 +1171,47 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 
 		missesText.y = diffText.y + diffText.height + 6; // "+6" = petit espace vertical
 		rankText.y = missesText.y;
+
+		// Points centrés sous le bloc Misses/Rank
+		if (diffDotsGroup != null && diffDotsGroup.members.length > 0)
+		{
+			var dotsTotalWidth:Float = (diffDotsGroup.members.length - 1) * DOT_GAP;
+			var dotsStartX:Float = scoreBG.x + (scoreBG.width / 2) - (dotsTotalWidth / 2);
+			var dotsY:Float = missesText.y + missesText.height + 14;
+
+			for (i in 0...diffDotsGroup.members.length)
+			{
+				var dot:FlxSprite = diffDotsGroup.members[i];
+				dot.x = dotsStartX + (i * DOT_GAP) - (dot.width / 2);
+				dot.y = dotsY;
+			}
+		}
+	}
+
+	/**
+	 * Régénère les points de difficulté : un point par difficulté disponible
+	 * pour la chanson sélectionnée (CoolUtil.difficulties), celui correspondant
+	 * à curDifficulty étant coloré différemment des autres. Appelée à chaque
+	 * changement de chanson (changeSelection) et de difficulté (changeDiff),
+	 * puisque le nombre de points peut varier d'une chanson à l'autre.
+	 */
+	function updateDifficultyDots():Void
+	{
+		if (diffDotsGroup == null) return;
+
+		diffDotsGroup.clear();
+
+		var total:Int = CoolUtil.difficulties.length;
+		for (i in 0...total)
+		{
+			var dot:FlxSprite = new FlxSprite();
+			dot.makeGraphic(Std.int(DOT_RADIUS * 2), Std.int(DOT_RADIUS * 2), FlxColor.TRANSPARENT, true);
+			var dotColor:FlxColor = (i == curDifficulty) ? DOT_COLOR_CURRENT : DOT_COLOR_OTHER;
+			FlxSpriteUtil.drawCircle(dot, DOT_RADIUS, DOT_RADIUS, DOT_RADIUS, dotColor);
+			diffDotsGroup.add(dot);
+		}
+
+		positionHighscore();
 	}
 }
 

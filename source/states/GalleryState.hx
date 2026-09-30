@@ -22,6 +22,10 @@ import sys.FileSystem;
 
 class GalleryState extends MusicBeatState {
 
+    // Musique de fond de la galerie (lancée à l'ouverture, et relancée quand on revient sur un écran
+    // de sélection après avoir été dans un lecteur de musique, qui la coupe).
+    static inline var BG_MUSIC:String = "ludum_dare_prototype";
+
     static inline var MUSIC_DESC_LINE_SPACING:Int = 8;
     static inline var OC_DESC_LINE_SPACING:Int = 8;
 
@@ -274,6 +278,14 @@ class GalleryState extends MusicBeatState {
     var musicMenuLogoConcepts:FlxSprite;
     var musicMenuLogoEarly:FlxSprite;
 
+    // Ces deux logos ne sont chargés qu'au premier affichage du menu "Music" (voir loadMusicMenuLogos()),
+    // pour ne pas décoder deux gros PNG à l'ouverture de la galerie. On mémorise donc leur boîte de placement.
+    var musicMenuLogosLoaded:Bool = false;
+    var musicMenuPadding:Float;
+    var musicMenuTop:Float;
+    var musicMenuColW:Float;
+    var musicMenuAreaH:Float;
+
     // --- Présentation des OC (Original Characters) ---
     var ocInfoGroup:FlxSpriteGroup;    // conteneur unique pour tout le panneau OC (permet de tout animer en un bloc, sans dérive)
     var ocInfoPanelBG:FlxSprite;       // fond semi-transparent derrière les infos
@@ -330,7 +342,7 @@ class GalleryState extends MusicBeatState {
 
         FlxG.mouse.visible = true;
 
-        FlxG.sound.playMusic(Paths.music("ludum_dare_prototype"), 0.8, true);
+        FlxG.sound.playMusic(Paths.music(BG_MUSIC), 0.8, true);
 
         // Même fond que celui affiché derrière le personnage dans le menu principal (mis en cache par MainMenuState)
         bg = new FlxSprite().loadGraphic(Paths.image(MainMenuState.lastBgGraphicPath));
@@ -413,18 +425,21 @@ class GalleryState extends MusicBeatState {
         // Écran de sélection "Music" : 2 logos cliquables, Concepts à gauche / Early à droite,
         // chacun occupant la moitié de la largeur disponible et toute la hauteur.
         // Icônes attendues dans : mods/<mod>/gallery/musics/concepts.png, early.png
-        var musicMenuColW:Float = (menuAreaW - menuPadding) / 2;
+        // Chargement PARESSEUX : on crée les sprites (pour garder le même ordre d'affichage) mais leur image
+        // n'est chargée qu'au premier passage dans le menu "Music" -> voir loadMusicMenuLogos().
+        musicMenuPadding = menuPadding;
+        musicMenuTop = menuTop;
+        musicMenuColW = (menuAreaW - menuPadding) / 2;
+        musicMenuAreaH = menuAreaH;
 
-        musicMenuLogoConcepts = new FlxSprite().loadGraphic(loadGalleryGraphic('gallery/musics/concepts.png'));
-        musicMenuLogoConcepts.antialiasing = ClientPrefs.globalAntialiasing;
+        musicMenuLogoConcepts = new FlxSprite();
         musicMenuLogoConcepts.scrollFactor.set();
-        fitSpriteInBox(musicMenuLogoConcepts, menuPadding, menuTop, musicMenuColW, menuAreaH);
+        musicMenuLogoConcepts.visible = false;
         add(musicMenuLogoConcepts);
 
-        musicMenuLogoEarly = new FlxSprite().loadGraphic(loadGalleryGraphic('gallery/musics/early.png'));
-        musicMenuLogoEarly.antialiasing = ClientPrefs.globalAntialiasing;
+        musicMenuLogoEarly = new FlxSprite();
         musicMenuLogoEarly.scrollFactor.set();
-        fitSpriteInBox(musicMenuLogoEarly, menuPadding + musicMenuColW + menuPadding, menuTop, musicMenuColW, menuAreaH);
+        musicMenuLogoEarly.visible = false;
         add(musicMenuLogoEarly);
 
         // --- Images des sous-catégories "Concepts" et "Sketches" ---
@@ -827,7 +842,15 @@ class GalleryState extends MusicBeatState {
     }
 
 
+    // Relance la musique de fond de la galerie uniquement si aucune musique n'est en train de jouer.
+    function ensureBackgroundMusic() {
+        if (FlxG.sound.music == null || !FlxG.sound.music.playing)
+            FlxG.sound.playMusic(Paths.music(BG_MUSIC), 0.8, true);
+    }
+
     function switchCategory(cat:String) {
+        FlxG.sound.play(Paths.sound('categories-select'));
+
         curCategory = cat;
         var isMusic = (cat == "Music");
 
@@ -841,10 +864,8 @@ class GalleryState extends MusicBeatState {
                 audioPlayer.destroy();
                 audioPlayer = null;
             }
-            // Relance la musique de fond de l'onglet Images si elle n'est pas déjà lancée
-            if (FlxG.sound.music == null || !FlxG.sound.music.playing) {
-                FlxG.sound.playMusic(Paths.music("betamusic"), 0.8, true);
-            }
+            // Relance la musique de fond si elle n'est pas déjà lancée
+            ensureBackgroundMusic();
             // On revient toujours sur l'écran de sélection (les 3 logos) en entrant dans "Images"
             showImagesMenu();
         } else {
@@ -886,6 +907,20 @@ class GalleryState extends MusicBeatState {
         musicDescText.visible = false;
     }
 
+    // Charge les 2 logos du menu Music au premier affichage seulement (voir champs musicMenu* plus haut).
+    function loadMusicMenuLogos() {
+        if (musicMenuLogosLoaded) return;
+        musicMenuLogosLoaded = true;
+
+        musicMenuLogoConcepts.loadGraphic(loadGalleryGraphic('gallery/musics/concepts.png'));
+        musicMenuLogoConcepts.antialiasing = ClientPrefs.globalAntialiasing;
+        fitSpriteInBox(musicMenuLogoConcepts, musicMenuPadding, musicMenuTop, musicMenuColW, musicMenuAreaH);
+
+        musicMenuLogoEarly.loadGraphic(loadGalleryGraphic('gallery/musics/early.png'));
+        musicMenuLogoEarly.antialiasing = ClientPrefs.globalAntialiasing;
+        fitSpriteInBox(musicMenuLogoEarly, musicMenuPadding + musicMenuColW + musicMenuPadding, musicMenuTop, musicMenuColW, musicMenuAreaH);
+    }
+
     /**
      * Équivalent de showImagesMenu(), mais pour "Music" : affiche les 2 logos
      * "Concepts" / "Early", et masque tout contenu (lecteur audio, flèches...).
@@ -893,6 +928,8 @@ class GalleryState extends MusicBeatState {
      */
     function showMusicsMenu() {
         musicsMenuOpen = true;
+
+        loadMusicMenuLogos(); // no-op après le premier appel
 
         musicMenuLogoConcepts.visible = true;
         musicMenuLogoEarly.visible = true;
@@ -925,6 +962,9 @@ class GalleryState extends MusicBeatState {
             audioPlayer.destroy();
             audioPlayer = null;
         }
+
+        // Retour depuis un lecteur (qui avait coupé la musique de fond) : on la relance.
+        ensureBackgroundMusic();
     }
 
     /**
@@ -932,6 +972,8 @@ class GalleryState extends MusicBeatState {
      * masque l'écran de sélection et affiche le lecteur avec la liste correspondante.
      */
     function selectMusicsSubCategory(sub:String) {
+        FlxG.sound.play(Paths.sound('categories-select'));
+
         curMusicsSubCategory = sub;
         musicsMenuOpen = false;
 
@@ -978,6 +1020,8 @@ class GalleryState extends MusicBeatState {
      * scannée automatiquement dans son dossier).
      */
     function selectImagesSubCategory(sub:String) {
+        FlxG.sound.play(Paths.sound('categories-select'));
+
         curImagesSubCategory = sub;
         imagesMenuOpen = false;
 
@@ -1152,7 +1196,7 @@ class GalleryState extends MusicBeatState {
 
         updateAuthorDisplay(author);
 
-        FlxG.sound.play(Paths.sound('scrollMenu'), 0.5);
+        if (change != 0) FlxG.sound.play(Paths.sound('scrollMenu'), 0.5); // change == 0 : arrivée dans une sous-catégorie (son déjà joué)
     }
 
     /**
@@ -1245,19 +1289,95 @@ class GalleryState extends MusicBeatState {
     // personnaliser manuellement le nom affiché, l'auteur ou la description d'une musique
     // précise plutôt que de laisser buildMusicListFromFolder() tout déduire.
     function addMusicToList(list:Array<GalleryMusic>, name:String, file:String, ?author:String, ?description:String) {
+        // La durée n'est PLUS calculée ici : elle l'était pour chaque musique dès l'ouverture de la
+        // galerie, ce qui décodait entièrement tous les .ogg (très lent). Elle est maintenant calculée
+        // à la demande, seulement pour la musique affichée : voir ensureMusicDuration().
         var mus = new GalleryMusic(name, file, author, description);
-        mus.durationMs = getAudioDuration(file);
         list.push(mus);
     }
 
-    // Charge brièvement le fichier audio pour en lire la durée (FlxSound.length),
-    // puis le détruit aussitôt. Évite d'avoir à renseigner la durée à la main.
+    // Retourne la durée (ms) de la musique, en la calculant une seule fois puis en la mémorisant.
+    function ensureMusicDuration(mus:GalleryMusic):Float {
+        if (mus.durationMs < 0) mus.durationMs = getAudioDuration(mus.file);
+        return mus.durationMs;
+    }
+
+    /**
+     * Lit la durée d'un fichier .ogg (Vorbis) directement dans ses en-têtes, SANS décoder l'audio :
+     *  - le sample rate se trouve dans l'en-tête d'identification Vorbis (1re page Ogg) ;
+     *  - le nombre total d'échantillons se trouve dans le "granule position" de la DERNIÈRE page Ogg.
+     * Durée = granule / sampleRate. On ne lit que ~512 octets au début et ~64 Ko à la fin du fichier.
+     * Retourne -1 si le fichier est illisible ou n'est pas du Ogg Vorbis (l'appelant se rabat alors
+     * sur le décodage complet, plus lent mais toujours correct).
+     */
+    static function readOggDurationMs(path:String):Float {
+        #if MODS_ALLOWED
+        var fi:sys.io.FileInput = null;
+        try {
+            if (path == null || !FileSystem.exists(path)) return -1;
+            var size:Int = FileSystem.stat(path).size;
+            if (size < 64) return -1;
+
+            fi = sys.io.File.read(path, true);
+
+            // --- Sample rate : 1re page, paquet d'identification Vorbis ---
+            var head:haxe.io.Bytes = fi.read(Std.int(Math.min(size, 512)));
+            if (head.getString(0, 4) != "OggS") { fi.close(); return -1; }
+
+            var p:Int = 27 + head.get(26);                // 27 octets d'en-tête + table des segments
+            if (head.length < p + 16 || head.get(p) != 1 || head.getString(p + 1, 6) != "vorbis") { fi.close(); return -1; }
+
+            var sampleRate:Int = head.getInt32(p + 12);   // little-endian
+            if (sampleRate <= 0) { fi.close(); return -1; }
+
+            // --- Nombre total d'échantillons : granule position de la dernière page ---
+            var tailLen:Int = Std.int(Math.min(size, 65536)); // une page Ogg fait au plus ~65 Ko
+            fi.seek(size - tailLen, sys.io.FileSeek.SeekBegin);
+            var tail:haxe.io.Bytes = fi.read(tailLen);
+            fi.close();
+            fi = null;
+
+            var i:Int = tailLen - 27;
+            while (i >= 0) {
+                if (tail.get(i) == 0x4F && tail.get(i + 1) == 0x67 && tail.get(i + 2) == 0x67 && tail.get(i + 3) == 0x53 && tail.get(i + 4) == 0) {
+                    var lo:Int = tail.getInt32(i + 6);
+                    var hi:Int = tail.getInt32(i + 10);
+                    var granule:Float = (lo < 0 ? lo + 4294967296.0 : lo) + hi * 4294967296.0;
+                    if (granule <= 0) return -1;
+                    return (granule / sampleRate) * 1000;
+                }
+                i--;
+            }
+        } catch (e:Dynamic) {
+            if (fi != null) { try { fi.close(); } catch (e2:Dynamic) {} }
+        }
+        #end
+        return -1;
+    }
+
+    // Retourne la durée d'une musique (en ms). Chemin rapide : lecture de l'en-tête .ogg (voir
+    // readOggDurationMs). Repli : chargement complet via Paths.returnSound() (mis en cache par Paths,
+    // donc gratuit ensuite lors de la lecture avec la touche ESPACE).
     function getAudioDuration(file:String):Float {
-        // Paths.returnSound() cherche d'abord dans mods/<mod>/gallery/musics/, puis dans assets/gallery/musics/
-        var tempSound:FlxSound = new FlxSound().loadEmbedded(Paths.returnSound('gallery/musics', file), false, false);
-        var length:Float = tempSound.length;
-        tempSound.destroy();
-        return length;
+        var ms:Float = -1;
+
+        #if MODS_ALLOWED
+        ms = readOggDurationMs(Paths.modFolders('gallery/musics/' + file + '.ogg'));
+        #end
+
+        if (ms < 0) {
+            var basePath:String = Paths.getPath('gallery/musics/' + file + '.ogg', SOUND);
+            basePath = basePath.substring(basePath.indexOf(':') + 1);
+            ms = readOggDurationMs(basePath);
+        }
+
+        if (ms < 0) {
+            // Paths.returnSound() cherche d'abord dans mods/<mod>/gallery/musics/, puis dans assets/gallery/musics/
+            var snd = Paths.returnSound('gallery/musics', file);
+            ms = (snd != null) ? snd.length : 0;
+        }
+
+        return ms;
     }
 
     /**
@@ -1319,9 +1439,9 @@ class GalleryState extends MusicBeatState {
         }
 
         progressBar.scale.x = 0;
-        timeText.text = "0:00 / " + formatTime(mus.durationMs);
+        timeText.text = "0:00 / " + formatTime(ensureMusicDuration(mus));
 
-        FlxG.sound.play(Paths.sound('scrollMenu'), 0.5);
+        if (change != 0) FlxG.sound.play(Paths.sound('scrollMenu'), 0.5); // change == 0 : arrivée dans une sous-catégorie (son déjà joué)
     }
 
     function changeOCSelection(change:Int = 0) {
@@ -1410,7 +1530,7 @@ class GalleryState extends MusicBeatState {
             colorTween = FlxTween.color(bg, 1, bg.color, intendedColor);
         }
 
-        FlxG.sound.play(Paths.sound('scrollMenu'), 0.5);
+        if (change != 0) FlxG.sound.play(Paths.sound('scrollMenu'), 0.5); // change == 0 : arrivée dans une sous-catégorie (son déjà joué)
     }
 
     // Assombrit une couleur d'accent pour en faire un fond discret et cohérent,
@@ -1441,13 +1561,53 @@ class GalleryState extends MusicBeatState {
 
         if (audioPlayer != null && audioPlayer.time > 0) {
             audioPlayer.resume();
-        } else {
-            var mus = musics[curSelected];
-            if (audioPlayer != null) { FlxTween.cancelTweensOf(audioPlayer); audioPlayer.destroy(); }
-            audioPlayer = new FlxSound().loadEmbedded(Paths.returnSound('gallery/musics', mus.file), false, false);
-            FlxG.sound.list.add(audioPlayer);
-            audioPlayer.play();
+            return;
         }
+
+        startMusicPlayback(loadMusicSound(musics[curSelected].file));
+    }
+
+    function startMusicPlayback(snd:openfl.media.Sound) {
+        if (audioPlayer != null) { FlxTween.cancelTweensOf(audioPlayer); audioPlayer.destroy(); }
+        audioPlayer = new FlxSound().loadEmbedded(snd, false, false);
+        FlxG.sound.list.add(audioPlayer);
+        audioPlayer.play();
+    }
+
+    // Chemin réel du .ogg d'une musique (mod d'abord, puis assets/), ou null si introuvable sur le disque.
+    function resolveMusicFilePath(file:String):String {
+        #if MODS_ALLOWED
+        var modPath:String = Paths.modFolders('gallery/musics/' + file + '.ogg');
+        if (FileSystem.exists(modPath)) return modPath;
+
+        var basePath:String = Paths.getPath('gallery/musics/' + file + '.ogg', SOUND);
+        basePath = basePath.substring(basePath.indexOf(':') + 1);
+        if (FileSystem.exists(basePath)) return basePath;
+        #end
+        return null;
+    }
+
+    /**
+     * Ouvre le .ogg en STREAMING : le fichier n'est pas décodé en entier en mémoire, il est lu et décodé
+     * par petits morceaux pendant la lecture (lime VorbisFile -> AudioBuffer.fromVorbisFile). Le démarrage
+     * est donc instantané quelle que soit la longueur de la musique, et la RAM utilisée reste minime.
+     * Repli sur Paths.returnSound() (décodage complet, lent) si le streaming n'est pas possible.
+     */
+    function loadMusicSound(file:String):openfl.media.Sound {
+        #if (MODS_ALLOWED && lime_vorbis)
+        var path:String = resolveMusicFilePath(file);
+        if (path != null) {
+            try {
+                var vorbis = lime.media.vorbis.VorbisFile.fromFile(path);
+                if (vorbis != null) {
+                    var buffer = lime.media.AudioBuffer.fromVorbisFile(vorbis);
+                    if (buffer != null) return openfl.media.Sound.fromAudioBuffer(buffer);
+                }
+            } catch (e:Dynamic) {}
+        }
+        #end
+
+        return Paths.returnSound('gallery/musics', file);
     }
 
     function formatTime(ms:Float):String {
@@ -1619,7 +1779,7 @@ class GalleryAuthorInfo {
 class GalleryMusic {
     public var name:String;
     public var file:String;
-    public var durationMs:Float = 0; // détectée automatiquement, voir getAudioDuration()
+    public var durationMs:Float = -1; // -1 = pas encore calculée ; renseignée à la demande, voir ensureMusicDuration()
     public var author:String; // nom de l'auteur, résolu automatiquement via CreditsState
     public var description:String; // texte informatif optionnel, voir MUSIC_DESCRIPTIONS
 
