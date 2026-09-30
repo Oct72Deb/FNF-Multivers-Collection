@@ -612,6 +612,47 @@ for (i in 0...WeekData.weeksList.length) {
 		}
 	}
 
+	/**
+	 * Ouvre l'Inst en STREAMING (même technique que la Gallery) : lime lit et décode le .ogg par
+	 * petits morceaux pendant la lecture, au lieu de tout décoder en RAM avant de pouvoir jouer
+	 * (ce que fait Sound.fromFile / Paths.returnSound). Démarrage instantané, RAM minimale.
+	 * Retourne null si le streaming n'est pas possible (l'appelant utilise alors le cache classique).
+	 */
+	function loadInstStreamed(instFullKey:String):openfl.media.Sound
+	{
+		#if (MODS_ALLOWED && lime_vorbis)
+		var path:String = Paths.modsSounds('songs', instFullKey);
+		if (!FileSystem.exists(path))
+		{
+			path = Paths.getPath('songs/' + instFullKey + '.ogg', SOUND);
+			path = path.substring(path.indexOf(':') + 1);
+			if (!FileSystem.exists(path)) return null;
+		}
+
+		try {
+			var vorbis = lime.media.vorbis.VorbisFile.fromFile(path);
+			if (vorbis != null)
+			{
+				var buffer = lime.media.AudioBuffer.fromVorbisFile(vorbis);
+				if (buffer != null) return openfl.media.Sound.fromAudioBuffer(buffer);
+			}
+		} catch (e:Dynamic) {}
+		#end
+		return null;
+	}
+
+	// Positions de loop personnalisées (en ms) pour certaines insts.
+	function getLoopPoint(track:String):Float
+	{
+		switch (track)
+		{
+			case "new game" | "new-game":                 return 23170;
+			case "crash out" | "crash-out":               return 330;
+			case "metal reflection" | "metal-reflection": return 7500;
+			default:                                      return 0;
+		}
+	}
+
 	override function update(elapsed:Float)
 	{
 		checkResetCheatCode();
@@ -723,7 +764,11 @@ if (instPlaying != curSelected || diffPlaying != curDifficulty)
 // depuis changeSelection()/changeDiff()) a normalement déjà lancé ce chargement
 // bien avant qu'on arrive ici.
 var instFullKey:String = info.instFullKey;
-var instReady:Bool = (trackKey == instNamePlaying) || Paths.isSoundCached('songs', instFullKey);
+// Lecture en STREAMING (comme la Gallery) : le .ogg n'est pas décodé en entier avant de jouer,
+// donc le démarrage est instantané. Si le streaming est impossible (fichier introuvable sur le
+// disque, build sans lime_vorbis...), on retombe sur l'ancien système basé sur le cache décodé.
+var streamedInst:openfl.media.Sound = (trackKey == instNamePlaying) ? null : loadInstStreamed(instFullKey);
+var instReady:Bool = (trackKey == instNamePlaying) || streamedInst != null || Paths.isSoundCached('songs', instFullKey);
 
 if (trackKey != instNamePlaying)
 {
@@ -737,15 +782,14 @@ if (trackKey != instNamePlaying)
 	else
 	{
 		FlxG.sound.music.volume = 0;
-		FlxG.sound.playMusic(Paths.inst(targetTrack, diffSuffix), 0);
+		FlxG.sound.playMusic(streamedInst != null ? streamedInst : Paths.inst(targetTrack, diffSuffix), 0);
 		instNamePlaying = trackKey;
 
-		if (targetTrack == "new game" || targetTrack == "new-game")
-			FlxG.sound.music.time = 23170;
-		if (targetTrack == "crash out" || targetTrack == "crash-out")
-			FlxG.sound.music.time = 330;
-		if (targetTrack == "metal reflection" || targetTrack == "metal-reflection")
-			FlxG.sound.music.time = 7500;
+		// Point de départ ET point de retour à chaque boucle (loopTime).
+		// Sans loopTime, FlxSound reboucle toujours à 0 à la fin de la piste.
+		var loopPoint:Float = getLoopPoint(targetTrack);
+		FlxG.sound.music.time = loopPoint;
+		FlxG.sound.music.loopTime = loopPoint;
 
 		var bpm:Int = (loadedSong != null) ? Std.int(loadedSong.bpm) : 120;
 		PlayState.SONG = loadedSong != null ? loadedSong : cast { song: targetTrack, notes: [], bpm: bpm };

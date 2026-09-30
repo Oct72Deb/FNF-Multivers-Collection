@@ -338,6 +338,8 @@ class PlayState extends MusicBeatState
 	private var songPreloadDone:Bool = false;
 	#if VIDEOS_ALLOWED
 	private var currentVideo:MP4Handler = null;
+	// Vidéo de chanson synchronisée sur Conductor.songPosition (voir preloadSongVideo)
+	public var songVideo:MP4Handler = null;
 	#end
 	
 	// stores the last judgement object
@@ -1818,6 +1820,55 @@ class PlayState extends MusicBeatState
 		#end
 	}
 
+	/**
+	 * Vidéo synchronisée sur la chanson. À appeler le PLUS TÔT possible (onCreate en Lua) :
+	 * VLC ouvre et initialise la vidéo pendant que le reste de la chanson se charge.
+	 * Elle attend ensuite en pause à t=0, puis est lancée automatiquement (avec
+	 * compensation du délai de VLC, mesuré et mémorisé) pile avec la musique.
+	 * @param name   nom de la vidéo (comme pour startVideo)
+	 * @param origin position de la chanson (ms) à laquelle la vidéo est à t=0
+	 */
+	public function preloadSongVideo(name:String, ?origin:Float = 0):Void
+	{
+		#if (VIDEOS_ALLOWED && sys)
+		if(songVideo != null)
+			return;
+
+		var filepath:String = Paths.video(name);
+		if(!FileSystem.exists(filepath))
+		{
+			FlxG.log.warn('Couldnt find video file: ' + name);
+			return;
+		}
+
+		precacheVideo(name);
+
+		songVideo = new MP4Handler();
+		songVideo.preloadSynced(filepath, origin);
+		#end
+	}
+
+	/** Sprite sur lequel la vidéo de chanson est affichée (devient visible pile au départ). */
+	public function setSongVideoSprite(sprite:FlxSprite):Void
+	{
+		#if VIDEOS_ALLOWED
+		if(songVideo != null)
+			songVideo.setSyncSprite(sprite);
+		#end
+	}
+
+	/** Arrête et libère la vidéo de chanson. */
+	public function endSongVideo():Void
+	{
+		#if VIDEOS_ALLOWED
+		if(songVideo != null)
+		{
+			songVideo.finishVideo();
+			songVideo = null;
+		}
+		#end
+	}
+
 	function startAndEnd()
 	{
 		if(endingSong)
@@ -3218,6 +3269,11 @@ if (OpenFlAssets.exists(file)) {
 
 			// Conductor.lastSongPos = FlxG.sound.music.time;
 		}
+
+		#if VIDEOS_ALLOWED
+		if (songVideo != null)
+			songVideo.syncUpdate(Conductor.songPosition, elapsed, !paused, !startingSong);
+		#end
 
 		if (camZooming)
 		{
@@ -5045,6 +5101,11 @@ if (SONG.validScore)
 	override function destroy() {
 		#if VIDEOS_ALLOWED
 		currentVideo = null;
+		if(songVideo != null)
+		{
+			songVideo.finishVideo();
+			songVideo = null;
+		}
 		#end
 
 		if(vocals != null)
