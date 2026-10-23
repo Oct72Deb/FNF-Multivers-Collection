@@ -42,6 +42,9 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import lime.app.Application;
+#if VIDEOS_ALLOWED
+import vlc.MP4Handler;
+#end
 import openfl.Assets;
 
 using StringTools;
@@ -64,6 +67,35 @@ class TitleState extends MusicBeatState
 	public static var volumeUpKeys:Array<FlxKey> = [FlxKey.NUMPADPLUS, FlxKey.PLUS];
 
 	public static var initialized:Bool = false;
+
+	// La vidéo "preload" (échauffement de VLC) ne se joue qu'une fois par lancement du jeu
+	static var preloadVideoPlayed:Bool = false;
+
+	function playPreloadVideo(onDone:Void->Void):Void
+	{
+		#if (VIDEOS_ALLOWED && sys)
+		if (preloadVideoPlayed)
+		{
+			onDone();
+			return;
+		}
+		preloadVideoPlayed = true;
+
+		var filepath:String = Paths.video('preload');
+		if (!FileSystem.exists(filepath))
+		{
+			trace('[PRELOAD] Video "preload" introuvable : ' + filepath);
+			onDone();
+			return;
+		}
+
+		var video:MP4Handler = new MP4Handler();
+		video.finishCallback = onDone;
+		video.playVideo(filepath);
+		#else
+		onDone();
+		#end
+	}
 
 	var blackScreen:FlxSprite;
 	var credGroup:FlxGroup;
@@ -200,9 +232,12 @@ class TitleState extends MusicBeatState
 				startIntro();
 			else
 			{
-				new FlxTimer().start(1, function(tmr:FlxTimer)
+				playPreloadVideo(function()
 				{
-					startIntro();
+					new FlxTimer().start(1, function(tmr:FlxTimer)
+					{
+						startIntro();
+					});
 				});
 			}
 		}

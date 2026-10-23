@@ -43,6 +43,8 @@ class GameOverSubstate extends MusicBeatSubstate
 		[{text: "We are at war.", duration: 1.0}],
 		[{text: "MACRON EXPLOSION!", duration: 2.0}]
 	];
+	var oceaneVoiceCount:Int = 5;
+
 	var subtitleText:FlxText;
 	var subtitleTimer:FlxTimer;
 	var camSubtitle:FlxCamera;
@@ -308,7 +310,7 @@ class GameOverSubstate extends MusicBeatSubstate
 						voiceIndex = FlxG.random.int(1, 7, exclude);
 					}
 
-					FlxG.sound.play(Paths.sound('macronGameover/macronGameover-' + voiceIndex), 1, false, null, true, function() {
+					FlxG.sound.play(Paths.sound('gameover-voices/macronGameover/macronGameover-' + voiceIndex), 1, false, null, true, function() {
 						if(!isEnding)
 						{
 							FlxG.sound.music.fadeIn(0.2, 1, 4);
@@ -316,6 +318,21 @@ class GameOverSubstate extends MusicBeatSubstate
 					});
 					// Lancement des sous-titres correspondant à la voice line tirée.
 					playSubtitles(voiceIndex);
+				}
+				else if (PlayState.SONG.stage == 'building')
+				{
+					playingDeathSound = true;
+					coolStartDeath(0.1); // musique plus basse que pour Macron (0.2) pour que la voix ressorte plus
+
+					// Océane : simple tirage aléatoire, sans règle spéciale sur le nombre de morts
+					var oceaneIndex:Int = FlxG.random.int(1, oceaneVoiceCount);
+
+					FlxG.sound.play(Paths.sound('gameover-voices/oceaneGameover/oceaneGameover-' + oceaneIndex), 1, false, null, true, function() {
+						if(!isEnding)
+						{
+							FlxG.sound.music.fadeIn(0.2, 1, 4);
+						}
+					});
 				}
 				else
 				{
@@ -423,7 +440,8 @@ class GameOverSubstate extends MusicBeatSubstate
 	// Comportement normal de l'écran de mort : retour au menu (Freeplay/Story), identique à l'ancien BACK.
 	function goBackToMenu():Void
 	{
-		FlxG.sound.music.stop();
+		if (PlayState.isStoryMode)
+			FlxG.sound.music.stop();
 		PlayState.deathCounter = 0;
 		PlayState.seenCutscene = false;
 		PlayState.chartingMode = false;
@@ -434,7 +452,10 @@ class GameOverSubstate extends MusicBeatSubstate
 		else
 			MusicBeatState.switchState(new FreeplayState());
 
-		FlxG.sound.playMusic(Paths.music('freakyMenu'));
+		if (PlayState.isStoryMode)
+			FlxG.sound.playMusic(Paths.music('freakyMenu'));
+		else
+			FlxG.sound.music.fadeOut(1, 0); // Freeplay : fondu au lieu de la musique du menu
 		PlayState.instance.callOnLuas('onGameOverConfirm', [false]);
 	}
 

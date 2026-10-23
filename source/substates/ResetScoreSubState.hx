@@ -4,6 +4,7 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxSubState;
 import flixel.util.FlxColor;
+import states.StoryMenuState;
 
 using StringTools;
 
@@ -98,6 +99,12 @@ class ResetScoreSubState extends MusicBeatSubstate
 					Highscore.resetSong(song, difficulty);
 				} else {
 					Highscore.resetWeek(WeekData.weeksList[week], difficulty);
+
+					// Réinitialise aussi les stats Story par piste (rang, miss, %), sauvegardées
+					// sous "story_" + nom de piste, sans toucher aux stats Freeplay.
+					var weekSongs:Array<Dynamic> = WeekData.weeksLoaded.get(WeekData.weeksList[week]).songs;
+					for (i in 0...weekSongs.length)
+						Highscore.resetSong(StoryMenuState.STORY_KEY_PREFIX + weekSongs[i][0], difficulty);
 				}
 			}
 			FlxG.sound.play(Paths.sound('cancelMenu'), 1);

@@ -157,10 +157,19 @@ class Paths
 		return 'assets/$file';
 	}
 
+public static var audioDifficultyAliases:Map<String, String> = [
+	'-nightmare' => '-erect'
+];
+
 inline static public function resolveDiffSuffix(song:String, prefix:String, diffSuffix:String):String
 {
 	if (diffSuffix != '' && !fileExists('songs/${formatToSongPath(song)}/$prefix$diffSuffix.$SOUND_EXT', SOUND))
+	{
+		var alias:String = audioDifficultyAliases.get(diffSuffix);
+		if (alias != null && fileExists('songs/${formatToSongPath(song)}/$prefix$alias.$SOUND_EXT', SOUND))
+			return alias;
 		return '';
+	}
 	return diffSuffix;
 }
 
@@ -416,7 +425,9 @@ inline static public function inst(song:String, ?diffSuffix:String = ''):Any
 			if(!currentTrackedSounds.exists(file)) {
 				currentTrackedSounds.set(file, Sound.fromFile(file));
 			}
-			localTrackedAssets.push(key);
+			// La cle du cache est `file` (chemin complet) : c'est elle qu'il faut marquer comme utilisee,
+			// sinon clearStoredMemory() purge tous les sons de mods (inst/voix re-decodes a chaque restart).
+			localTrackedAssets.push(file);
 			return currentTrackedSounds.get(file);
 		}
 		#end

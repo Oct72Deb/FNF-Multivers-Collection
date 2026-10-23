@@ -117,6 +117,7 @@ class WeekEditorState extends MusicBeatState
 		reloadAllShit();
 
 		FlxG.mouse.visible = true;
+		playEditorMusic();
 
 		super.create();
 	}
@@ -174,6 +175,20 @@ class WeekEditorState extends MusicBeatState
 	var hideCheckbox:FlxUICheckBox;
 
 	public static var weekFileName:String = 'week1';
+
+	// Musique des éditeurs de week (offsetSong). Statique pour ne pas la relancer
+	// quand on passe de Story Mode à Freeplay et inversement.
+	public static var editorMusicPlaying:Bool = false;
+	public static function playEditorMusic() {
+		if(!editorMusicPlaying || FlxG.sound.music == null || !FlxG.sound.music.playing) {
+			FlxG.sound.playMusic(Paths.music('offsetSong'), 1, true);
+			editorMusicPlaying = true;
+		}
+	}
+	public static function stopEditorMusic() {
+		FlxG.sound.playMusic(Paths.music('freakyMenu'));
+		editorMusicPlaying = false;
+	}
 	
 	function addWeekUI() {
 		var tab_group = new FlxUI(null, UI_box);
@@ -450,7 +465,7 @@ class WeekEditorState extends MusicBeatState
 			FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
 			if(FlxG.keys.justPressed.ESCAPE) {
 				MusicBeatState.switchState(new editors.MasterEditorMenu());
-				FlxG.sound.playMusic(Paths.music('freakyMenu'));
+				WeekEditorState.stopEditorMusic();
 			}
 		}
 
@@ -629,6 +644,7 @@ class WeekEditorFreeplayState extends MusicBeatState
 
 		addEditorBox();
 		changeSelection();
+		WeekEditorState.playEditorMusic();
 		super.create();
 	}
 	
@@ -637,15 +653,17 @@ class WeekEditorFreeplayState extends MusicBeatState
 	function addEditorBox() {
 		var tabs = [
 			{name: 'Freeplay', label: 'Freeplay'},
+			{name: 'Difficulty', label: 'Difficulty Icon & BG'},
 		];
 		UI_box = new FlxUITabMenu(null, tabs, true);
-		UI_box.resize(250, 240);
-		UI_box.x = FlxG.width - UI_box.width - 100;
+		UI_box.resize(320, 285);
+		UI_box.x = FlxG.width - UI_box.width - 60;
 		UI_box.y = FlxG.height - UI_box.height - 60;
 		UI_box.scrollFactor.set();
 		
-		UI_box.selected_tab_id = 'Week';
 		addFreeplayUI();
+		addDifficultyUI();
+		UI_box.selected_tab_id = 'Freeplay';
 		add(UI_box);
 
 		var blackBlack:FlxSprite = new FlxSprite(0, 670).makeGraphic(FlxG.width, 50, FlxColor.BLACK);
@@ -676,11 +694,19 @@ class WeekEditorFreeplayState extends MusicBeatState
 	
 	override function getEvent(id:String, sender:Dynamic, data:Dynamic, ?params:Array<Dynamic>) {
 		if(id == FlxUIInputText.CHANGE_EVENT && (sender is FlxUIInputText)) {
+			if(sender == diffIconInputText) {
+				onDiffIconTextChanged();
+				return;
+			}
 			weekFile.songs[curSelected][1] = iconInputText.text;
 			iconArray[curSelected].changeIcon(iconInputText.text);
+			while(shownIconNames.length <= curSelected) shownIconNames.push(null);
+			shownIconNames[curSelected] = iconInputText.text;
 		} else if(id == FlxUINumericStepper.CHANGE_EVENT && (sender is FlxUINumericStepper)) {
 			if(sender == bgColorStepperR || sender == bgColorStepperG || sender == bgColorStepperB) {
 				updateBG();
+			} else if(sender == diffColorStepperR || sender == diffColorStepperG || sender == diffColorStepperB) {
+				onDiffStepperChanged();
 			}
 		}
 	}
@@ -756,7 +782,294 @@ class WeekEditorFreeplayState extends MusicBeatState
 		weekFile.songs[curSelected][2][0] = Math.round(bgColorStepperR.value);
 		weekFile.songs[curSelected][2][1] = Math.round(bgColorStepperG.value);
 		weekFile.songs[curSelected][2][2] = Math.round(bgColorStepperB.value);
-		bg.color = FlxColor.fromRGB(weekFile.songs[curSelected][2][0], weekFile.songs[curSelected][2][1], weekFile.songs[curSelected][2][2]);
+		refreshPreview();
+	}
+
+	// Aperçu du fond : dans l'onglet "Difficulty BG", on voit la couleur de la difficulté choisie
+	// (si elle est personnalisée) ; sinon, la couleur de base de la chanson.
+	function refreshPreview() {
+		var c:Array<Int> = weekFile.songs[curSelected][2];
+		var col:FlxColor = FlxColor.fromRGB(c[0], c[1], c[2]);
+		if(UI_box != null && UI_box.selected_tab_id == 'Difficulty') {
+			var dc:Array<Int> = getDiffColorArray();
+			if(dc != null) col = FlxColor.fromRGB(dc[0], dc[1], dc[2]);
+		}
+		bg.color = col;
+		refreshIcons();
+	}
+
+	// Icônes de la liste : dans l'onglet "Difficulty BG", l'icône de la chanson sélectionnée devient
+	// celle de la difficulté choisie (song[3]) ; partout ailleurs, c'est l'icône de base de la chanson.
+	var shownIconNames:Array<String> = [];
+	function refreshIcons() {
+		for(i in 0...iconArray.length) {
+			var name:String = weekFile.songs[i][1];
+			if(i == curSelected && UI_box != null && UI_box.selected_tab_id == 'Difficulty' && diffNames.length > 0)
+				name = getDiffIconName();
+
+			while(shownIconNames.length <= i) shownIconNames.push(null);
+			if(shownIconNames[i] != name) {
+				iconArray[i].changeIcon(name);
+				shownIconNames[i] = name;
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// Couleur de fond PAR DIFFICULTÉ
+	// Stockée dans le 6e élément de la chanson : { "hard": [r, g, b], ... } (clés en minuscules).
+	// ---------------------------------------------------------------------------------------
+	var diffNames:Array<String> = [];
+	var curDiffIndex:Int = 0;
+	var updatingDiffUI:Bool = false;
+	var lastTabId:String = '';
+
+	var diffNameText:FlxText;
+	var diffIconText:FlxText;
+	var diffIconInputText:FlxUIInputText;
+	var diffCustomCheckbox:FlxUICheckBox;
+	var diffColorStepperR:FlxUINumericStepper;
+	var diffColorStepperG:FlxUINumericStepper;
+	var diffColorStepperB:FlxUINumericStepper;
+
+	function addDifficultyUI() {
+		var tab_group = new FlxUI(null, UI_box);
+		tab_group.name = "Difficulty";
+
+		var prevDiff:FlxButton = new FlxButton(10, 30, "< Prev", function() { changeDiffIndex(-1); });
+		var nextDiff:FlxButton = new FlxButton(140, 30, "Next >", function() { changeDiffIndex(1); });
+
+		diffNameText = new FlxText(10, 56, 230, '', 10);
+
+		diffIconInputText = new FlxUIInputText(10, 92, 110, '', 8);
+		diffIconText = new FlxText(10, 110, 300, '', 8);
+
+		diffCustomCheckbox = new FlxUICheckBox(10, 130, null, null, "Custom background color", 200);
+		diffCustomCheckbox.callback = function()
+		{
+			if(updatingDiffUI) return;
+			if(diffCustomCheckbox.checked) saveDiffColor();
+			else clearDiffColor();
+			refreshPreview();
+		};
+
+		diffColorStepperR = new FlxUINumericStepper(10, 176, 20, 255, 0, 255, 0);
+		diffColorStepperG = new FlxUINumericStepper(80, 176, 20, 255, 0, 255, 0);
+		diffColorStepperB = new FlxUINumericStepper(150, 176, 20, 255, 0, 255, 0);
+
+		var getDiffIconColor:FlxButton = new FlxButton(10, diffColorStepperR.y + 25, "Get Icon Color", function() {
+			var tmpIcon:HealthIcon = new HealthIcon(getDiffIconName());
+			var coolColor:FlxColor = FlxColor.fromInt(CoolUtil.dominantColor(tmpIcon));
+			tmpIcon.destroy();
+
+			updatingDiffUI = true;
+			diffColorStepperR.value = coolColor.red;
+			diffColorStepperG.value = coolColor.green;
+			diffColorStepperB.value = coolColor.blue;
+			diffCustomCheckbox.checked = true;
+			updatingDiffUI = false;
+
+			saveDiffColor();
+			refreshPreview();
+		});
+
+		var hint:FlxText = new FlxText(10, getDiffIconColor.y + 28, 230, 'Unchecked = the song color is used for\nthis difficulty.', 8);
+
+		tab_group.add(new FlxText(10, 14, 0, 'Difficulty:'));
+		tab_group.add(prevDiff);
+		tab_group.add(nextDiff);
+		tab_group.add(diffNameText);
+		tab_group.add(new FlxText(10, diffIconInputText.y - 18, 0, 'Icon for this difficulty (empty = song icon):'));
+		tab_group.add(diffIconInputText);
+		tab_group.add(diffIconText);
+		tab_group.add(diffCustomCheckbox);
+		tab_group.add(new FlxText(10, diffColorStepperR.y - 18, 0, 'Difficulty background Color R/G/B:'));
+		tab_group.add(diffColorStepperR);
+		tab_group.add(diffColorStepperG);
+		tab_group.add(diffColorStepperB);
+		tab_group.add(getDiffIconColor);
+		tab_group.add(hint);
+		UI_box.addGroup(tab_group);
+	}
+
+	function splitDiffs(str:String):Array<String> {
+		var result:Array<String> = [];
+		if(str != null) {
+			for(d in str.split(',')) {
+				var t:String = d.trim();
+				if(t.length > 0) result.push(t);
+			}
+		}
+		return result;
+	}
+
+	function containsIgnoreCase(list:Array<String>, name:String):Bool {
+		for(d in list) if(d.toLowerCase().trim() == name.toLowerCase().trim()) return true;
+		return false;
+	}
+
+	// Difficultés possibles pour la chanson : celles de la week (ou les défauts) + celles propres à la chanson
+	function refreshDiffList() {
+		var previous:String = (diffNames.length > 0 && curDiffIndex < diffNames.length) ? diffNames[curDiffIndex] : null;
+
+		diffNames = splitDiffs(weekFile.difficulties);
+		if(diffNames.length == 0) diffNames = CoolUtil.defaultDifficulties.copy();
+
+		var song:Array<Dynamic> = weekFile.songs[curSelected];
+		if(song.length > 4 && song[4] != null) {
+			for(d in splitDiffs(Std.string(song[4]))) {
+				if(!containsIgnoreCase(diffNames, d)) diffNames.push(d);
+			}
+		}
+
+		curDiffIndex = 0;
+		if(previous != null) {
+			for(i in 0...diffNames.length) {
+				if(diffNames[i].toLowerCase().trim() == previous.toLowerCase().trim()) { curDiffIndex = i; break; }
+			}
+		}
+	}
+
+	function getDiffKey():String {
+		return diffNames[curDiffIndex].toLowerCase().trim();
+	}
+
+	// Retourne le vrai nom du champ (casse d'origine) dans un objet JSON, ou null
+	function findField(obj:Dynamic, key:String):String {
+		if(obj == null) return null;
+		for(f in Reflect.fields(obj)) {
+			if(f.toLowerCase().trim() == key) return f;
+		}
+		return null;
+	}
+
+	function getDiffColorsObj(create:Bool):Dynamic {
+		var song:Array<Dynamic> = weekFile.songs[curSelected];
+		var obj:Dynamic = (song.length > 5) ? song[5] : null;
+		if(obj == null && create) {
+			while(song.length < 6) song.push(null);
+			obj = {};
+			song[5] = obj;
+		}
+		return obj;
+	}
+
+	function getDiffColorArray():Array<Int> {
+		if(diffNames.length == 0) return null;
+		var obj:Dynamic = getDiffColorsObj(false);
+		var field:String = findField(obj, getDiffKey());
+		if(field != null) {
+			var c:Array<Int> = Reflect.field(obj, field);
+			if(c != null && c.length >= 3) return c;
+		}
+		return null;
+	}
+
+	function saveDiffColor() {
+		var obj:Dynamic = getDiffColorsObj(true);
+		var key:String = getDiffKey();
+		var old:String = findField(obj, key);
+		if(old != null) Reflect.deleteField(obj, old);
+		Reflect.setField(obj, key, [Math.round(diffColorStepperR.value), Math.round(diffColorStepperG.value), Math.round(diffColorStepperB.value)]);
+	}
+
+	function clearDiffColor() {
+		var obj:Dynamic = getDiffColorsObj(false);
+		if(obj == null) return;
+		var old:String = findField(obj, getDiffKey());
+		if(old != null) Reflect.deleteField(obj, old);
+
+		// Plus aucune couleur personnalisée : on nettoie le JSON
+		if(Reflect.fields(obj).length == 0) {
+			var song:Array<Dynamic> = weekFile.songs[curSelected];
+			song[5] = null;
+			while(song.length > 3 && song[song.length - 1] == null) song.pop();
+		}
+	}
+
+	// Icône utilisée pour la difficulté choisie : celle du 4e élément (song[3]) si elle existe, sinon l'icône de la chanson
+	function getDiffIconName():String {
+		var explicit:String = getExplicitDiffIcon();
+		if(explicit != null) return explicit;
+		return weekFile.songs[curSelected][1];
+	}
+
+	// Icône définie spécifiquement pour la difficulté choisie (song[3]), ou null si aucune
+	function getExplicitDiffIcon():String {
+		var song:Array<Dynamic> = weekFile.songs[curSelected];
+		var icons:Dynamic = (song.length > 3) ? song[3] : null;
+		var field:String = findField(icons, getDiffKey());
+		if(field != null) {
+			var name:String = Std.string(Reflect.field(icons, field));
+			if(name != null && name.trim().length > 0) return name.trim();
+		}
+		return null;
+	}
+
+	function updateDiffIconLabel() {
+		diffIconText.text = 'Icon used: ' + getDiffIconName() + (getExplicitDiffIcon() == null ? '  (song icon)' : '');
+	}
+
+	// Saisie de l'icône de la difficulté : écrit/supprime l'entrée dans song[3] = { "hard": "icone", ... }
+	function onDiffIconTextChanged() {
+		if(updatingDiffUI) return;
+		var song:Array<Dynamic> = weekFile.songs[curSelected];
+		var key:String = getDiffKey();
+		var txt:String = diffIconInputText.text.trim();
+
+		var icons:Dynamic = (song.length > 3) ? song[3] : null;
+		var old:String = findField(icons, key);
+		if(old != null) Reflect.deleteField(icons, old);
+
+		if(txt.length > 0) {
+			if(icons == null) {
+				while(song.length < 4) song.push(null);
+				icons = {};
+				song[3] = icons;
+			}
+			Reflect.setField(icons, key, txt);
+		} else if(icons != null && Reflect.fields(icons).length == 0) {
+			// Plus aucune icône personnalisée : on nettoie le JSON
+			song[3] = null;
+			while(song.length > 3 && song[song.length - 1] == null) song.pop();
+		}
+
+		updateDiffIconLabel();
+		refreshIcons();
+	}
+
+	function onDiffStepperChanged() {
+		if(updatingDiffUI) return;
+		// Modifier la couleur active automatiquement la personnalisation
+		updatingDiffUI = true;
+		diffCustomCheckbox.checked = true;
+		updatingDiffUI = false;
+		saveDiffColor();
+		refreshPreview();
+	}
+
+	function changeDiffIndex(change:Int) {
+		curDiffIndex += change;
+		if(curDiffIndex < 0) curDiffIndex = diffNames.length - 1;
+		if(curDiffIndex >= diffNames.length) curDiffIndex = 0;
+		refreshDiffUI();
+		refreshPreview();
+	}
+
+	function refreshDiffUI() {
+		updatingDiffUI = true;
+		diffNameText.text = diffNames[curDiffIndex] + '  (' + (curDiffIndex + 1) + '/' + diffNames.length + ')';
+		var explicit:String = getExplicitDiffIcon();
+		diffIconInputText.text = (explicit != null) ? explicit : '';
+		updateDiffIconLabel();
+
+		var c:Array<Int> = getDiffColorArray();
+		diffCustomCheckbox.checked = (c != null);
+		if(c == null) c = weekFile.songs[curSelected][2]; // pas de couleur propre : on affiche celle de la chanson
+		diffColorStepperR.value = Math.round(c[0]);
+		diffColorStepperG.value = Math.round(c[1]);
+		diffColorStepperB.value = Math.round(c[2]);
+		updatingDiffUI = false;
 	}
 
 	function changeSelection(change:Int = 0) {
@@ -796,7 +1109,9 @@ class WeekEditorFreeplayState extends MusicBeatState
 		bgColorStepperR.value = Math.round(weekFile.songs[curSelected][2][0]);
 		bgColorStepperG.value = Math.round(weekFile.songs[curSelected][2][1]);
 		bgColorStepperB.value = Math.round(weekFile.songs[curSelected][2][2]);
+		refreshDiffList();
 		updateBG();
+		refreshDiffUI();
 	}
 
 	override function update(elapsed:Float) {
@@ -809,12 +1124,13 @@ class WeekEditorFreeplayState extends MusicBeatState
 			return;
 		}
 		
-		if(iconInputText.hasFocus) {
+		if(iconInputText.hasFocus || diffIconInputText.hasFocus) {
 			FlxG.sound.muteKeys = [];
 			FlxG.sound.volumeDownKeys = [];
 			FlxG.sound.volumeUpKeys = [];
 			if(FlxG.keys.justPressed.ENTER) {
 				iconInputText.hasFocus = false;
+				diffIconInputText.hasFocus = false;
 			}
 		} else {
 			FlxG.sound.muteKeys = TitleState.muteKeys;
@@ -822,11 +1138,19 @@ class WeekEditorFreeplayState extends MusicBeatState
 			FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
 			if(FlxG.keys.justPressed.ESCAPE) {
 				MusicBeatState.switchState(new editors.MasterEditorMenu());
-				FlxG.sound.playMusic(Paths.music('freakyMenu'));
+				WeekEditorState.stopEditorMusic();
 			}
 
 			if(controls.UI_UP_P) changeSelection(-1);
 			if(controls.UI_DOWN_P) changeSelection(1);
+		}
+
+		// Changement d'onglet : on met à jour l'aperçu du fond
+		if(UI_box.selected_tab_id != lastTabId) {
+			lastTabId = UI_box.selected_tab_id;
+			refreshDiffList();
+			refreshDiffUI();
+			refreshPreview();
 		}
 		super.update(elapsed);
 	}

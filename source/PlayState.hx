@@ -86,6 +86,15 @@ import vlc.MP4Handler;
 
 using StringTools;
 
+// --- Stage "test" (Abstract Energy Background) : structures d'animation ---
+typedef EnergyRing = { var bars:Array<FlxSprite>; var p:Float; var color:Int; }
+typedef EnergyBeam = { var spr:FlxSprite; var base:Float; var speed:Float; var alpha:Float; var freq:Float; var phase:Float; }
+typedef EnergyShard = { var spr:FlxSprite; var x:Float; var y:Float; var vy:Float; var amp:Float; var freq:Float; var phase:Float; var spin:Float; var alpha:Float; }
+typedef EnergyDrifter = { var spr:FlxSprite; var x:Float; var y:Float; var vx:Float; var vy:Float; var spin:Float; var freq:Float; var phase:Float; var alpha:Float; }
+typedef EnergyOrbiter = { var spr:FlxSprite; var r:Float; var ang:Float; var w:Float; var amp:Float; var freq:Float; var phase:Float; var alpha:Float; }
+typedef EnergyStreak = { var spr:FlxSprite; var p:Float; var ang:Float; var speed:Float; var thick:Float; }
+typedef EnergyBolt = { var segs:Array<FlxSprite>; var life:Float; }
+
 class PlayState extends MusicBeatState
 {
 	public static var STRUM_X = 42;
@@ -189,7 +198,7 @@ class PlayState extends MusicBeatState
 	private var curSong:String = "";
 
 	public var gfSpeed:Int = 1;
-	public var health:Float = 1;
+	public var health:Float = 1; // = HEALTH_START
 	public var combo:Int = 0;
 
 	private var healthBarBG:AttachedSprite;
@@ -215,6 +224,25 @@ class PlayState extends MusicBeatState
 	//Gameplay settings
 	public var healthGain:Float = 1;
 	public var healthLoss:Float = 1;
+
+	// ---------- Équilibrage de la jauge de vie ----------
+	// Vie de départ (milieu "historique" de Psych 0.6.3).
+	public static inline var HEALTH_START:Float = 1;
+	// Perte pour une note normale ratée : 1 / 16  =>  16 notes ratées depuis la vie de départ = mort.
+	public static inline var HEALTH_MISS_LOSS:Float = 0.0625;
+	// Perte quand on appuie dans le vide (ghost tapping désactivé).
+	public static inline var HEALTH_MISS_PRESS_LOSS:Float = 0.0625;
+	// Vie maximale : jauge standard de Psych (0 à 2), inchangée.
+	public static inline var HEALTH_MAX:Float = 2;
+	// Gain pour une note "Sick" (valeur d'origine : 0.023, soit ~44 notes).
+	// 1 / 37 = 0.02703 ; arrondi légèrement au-dessus pour que la 37e note atteigne bien le bout
+	// (36 notes = 1.976 < 2, 37 notes = 2.003 -> plafonné à 2).
+	public static inline var HEALTH_HIT_GAIN:Float = 0.0271;
+	// Valeurs par défaut de Note.hx (0.6.3), pour mettre à l'échelle les notes spéciales proprement.
+	static inline var NOTE_DEFAULT_HIT_HEALTH:Float = 0.023;
+	static inline var NOTE_DEFAULT_MISS_HEALTH:Float = 0.0475;
+	// Score fixe par segment tenu d'une longue note.
+	static inline var SUSTAIN_SEGMENT_SCORE:Int = 10;
 	public var instakillOnMiss:Bool = false;
 	public var cpuControlled:Bool = false;
 	public var practiceMode:Bool = false;
@@ -237,7 +265,11 @@ class PlayState extends MusicBeatState
 
 	var dadbattleBlack:BGSprite;
 	var dadbattleLight:BGSprite;
+	var dadbattleLightBF:BGSprite;
 	var dadbattleSmokes:FlxSpriteGroup;
+	var dadbattleActive:Bool = false;
+	var dadbattleLightTimer:FlxTimer = null;
+	var dadbattleSmokesTween:FlxTween = null;
 
 	var halloweenBG:BGSprite;
 	var halloweenWhite:BGSprite;
@@ -273,6 +305,42 @@ class PlayState extends MusicBeatState
 	var tankWatchtower:BGSprite;
 	var tankGround:BGSprite;
 	var foregroundSprites:FlxTypedGroup<BGSprite>;
+
+	// ===== Stage "test" : Abstract Energy Background =====
+	// ---------- REGLAGES ----------
+	static inline var ENERGY_NUM_RINGS:Int = 10;       // anneaux du tunnel (4 sprites chacun) -> baisse pour gagner en perf
+	static inline var ENERGY_NUM_BEAMS:Int = 10;       // rayons qui tournent derriere le tunnel
+	static inline var ENERGY_NUM_BOLTS:Int = 3;        // eclairs simultanes
+	static inline var ENERGY_BOLT_EVERY:Int = 4;       // un eclair toutes les X beats (0 = aucun)
+	static inline var ENERGY_BOLT_SHAKE:Float = 0.002; // tremblement camera a chaque eclair (0 = aucun)
+	static inline var ENERGY_TUNNEL_SPEED:Float = 0.10;
+	static inline var ENERGY_TUNNEL_TWIST:Float = 80;  // torsion du tunnel en degres (0 = tunnel droit)
+	static inline var ENERGY_BEAT_PULSE:Float = 1.0;   // intensite du flash sur chaque beat (0 = aucun)
+	static inline var ENERGY_NUM_STREAKS:Int = 36;     // traits de vitesse qui partent du centre
+	static inline var ENERGY_NUM_DRIFTERS:Int = 36;    // particules qui derivent dans toutes les directions
+	static inline var ENERGY_NUM_ORBITERS:Int = 22;    // particules en orbite autour du noyau
+	static inline var ENERGY_VIGNETTE:Bool = true;     // bords sombres
+	static inline var ENERGY_VIG_LAYERS:Int = 5;
+	static inline var ENERGY_VIG_ALPHA:Float = 0.16;
+	// ------------------------------
+	static inline var ENERGY_CX:Float = 640;           // centre de l'ecran (1280x720)
+	static inline var ENERGY_CY:Float = 360;
+	static inline var ENERGY_SEGS:Int = 9;             // segments par eclair
+
+	var energyPalette:Array<Int> = [0xFF00E5FF, 0xFFFF2BD6, 0xFF7A2BFF, 0xFF2B6BFF];
+	var energyBase:FlxSprite;
+	var energyCoreA:FlxSprite;
+	var energyCoreB:FlxSprite;
+	var energyCoreC:FlxSprite;
+	var energyRings:Array<EnergyRing> = [];
+	var energyBeams:Array<EnergyBeam> = [];
+	var energyShards:Array<EnergyShard> = [];
+	var energyDrifters:Array<EnergyDrifter> = [];
+	var energyOrbiters:Array<EnergyOrbiter> = [];
+	var energyStreaks:Array<EnergyStreak> = [];
+	var energyBolts:Array<EnergyBolt> = [];
+	var energyT:Float = 0;
+	var energyPulse:Float = 0;
 
 	public var songScore:Int = 0;
 	public var songHits:Int = 0;
@@ -353,10 +421,11 @@ class PlayState extends MusicBeatState
 	{
 		//trace('Playback Rate: ' + playbackRate);
 		// Release leftovers from the previous state BEFORE we start building the new song.
-		// Do not call clearUnusedMemory after the current-song preload: doing so can evict
-		// freshly warmed assets (especially video/audio caches depending on the Paths impl).
+		// clearStoredMemory() remet localTrackedAssets a zero : NE PAS appeler clearUnusedMemory()
+		// juste apres, sinon tous les graphiques sont detruits puis recharges depuis le disque
+		// (restart lent). clearUnusedMemory() est appele a la FIN de create() (comme dans le moteur
+		// d'origine), quand localTrackedAssets contient deja ce que cette chanson utilise.
 		Paths.clearStoredMemory();
-		Paths.clearUnusedMemory();
 
 		// for lua
 		instance = this;
@@ -864,6 +933,9 @@ class PlayState extends MusicBeatState
 				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('tank4', 1300, 900, 1.5, 1.5, ['fg']));
 				foregroundSprites.add(new BGSprite('tank5', 1620, 700, 1.5, 1.5, ['fg']));
 				if(!ClientPrefs.lowQuality) foregroundSprites.add(new BGSprite('tank3', 1300, 1200, 3.5, 2.5, ['fg']));
+
+			case 'geo': //Abstract Energy Background
+				createEnergyStage();
 		}
 
 		var songKey:String = Paths.formatToSongPath(SONG.song);
@@ -879,10 +951,14 @@ class PlayState extends MusicBeatState
 
 		    case 'starlight':
 				GameOverSubstate.deathSoundName = 'fnf_loss_sfx-pico';
+				GameOverSubstate.endSoundName = 'gameOverEnd-star';
 				GameOverSubstate.characterName = 'pico_death';
 
 			case 'allocution':
 				GameOverSubstate.endSoundName = 'gameOverEnd-FR';
+
+			case 'new-game':
+				GameOverSubstate.endSoundName = 'gameOverEnd-M';
 		}
 
 		// Conditions propres à une difficulté précise (anciennement encodées dans SONG.song)
@@ -1169,7 +1245,7 @@ class PlayState extends MusicBeatState
 		if(ClientPrefs.downScroll) healthBarBG.y = 0.11 * FlxG.height;
 
 		healthBar = new FlxBar(healthBarBG.x + 4, healthBarBG.y + 4, RIGHT_TO_LEFT, Std.int(healthBarBG.width - 8), Std.int(healthBarBG.height - 8), this,
-			'health', 0, 2);
+			'health', 0, HEALTH_MAX);
 		healthBar.scrollFactor.set();
 		// healthBar
 		healthBar.visible = !ClientPrefs.hideHud;
@@ -1436,6 +1512,10 @@ class PlayState extends MusicBeatState
 
 		// Second pass: intros/dialogue/events may have added more cache entries. Keep them warm.
 		flushPrecacheList();
+
+		// Libere uniquement ce que la chanson precedente utilisait et que celle-ci n'a pas redemande.
+		// Les assets d'un restart sont deja dans localTrackedAssets, donc conserves (pas de rechargement).
+		Paths.clearUnusedMemory();
 		
 		CustomFadeTransition.nextCamera = camOther;
 	}
@@ -2689,53 +2769,57 @@ FlxG.sound.list.add(vocals);
 		var daBeats:Int = 0; // Not exactly representative of 'daBeats' lol, just how much it has looped
 
 var songName:String = Paths.formatToSongPath(SONG.song);
-var file:String = Paths.json(songName + '/events');
-#if MODS_ALLOWED
-if (FileSystem.exists(Paths.modsJson(songName + '/events')) || FileSystem.exists(file)) {
-#else
-if (OpenFlAssets.exists(file)) {
-#end
-	var eventsJson:Dynamic = Song.loadFromJson('events', songName);
+var currentDiffName:String = (CoolUtil.difficulties[PlayState.storyDifficulty] != null)
+	? CoolUtil.difficulties[PlayState.storyDifficulty].toLowerCase()
+	: '';
 
-	// Le fichier events.json peut restreindre son application à certaines difficultés
-	// via un champ optionnel "validDifficulties". Absent = appliqué à toutes (comportement d'origine).
-	var validDiffs:Array<String> = Reflect.field(eventsJson, 'validDifficulties');
-	var currentDiffName:String = (CoolUtil.difficulties[PlayState.storyDifficulty] != null)
-		? CoolUtil.difficulties[PlayState.storyDifficulty].toLowerCase()
-		: '';
+// Charge events.json puis events2.json (meme format, meme gestion de validDifficulties)
+for (eventsFileName in ['events', 'events2'])
+{
+	var file:String = Paths.json(songName + '/' + eventsFileName);
+	#if MODS_ALLOWED
+	if (FileSystem.exists(Paths.modsJson(songName + '/' + eventsFileName)) || FileSystem.exists(file)) {
+	#else
+	if (OpenFlAssets.exists(file)) {
+	#end
+		var eventsJson:Dynamic = Song.loadFromJson(eventsFileName, songName);
 
-	var isValidForDiff:Bool = true;
-	if (validDiffs != null && validDiffs.length > 0)
-	{
-		isValidForDiff = false;
-		for (d in validDiffs)
+		// "validDifficulties" optionnel : absent = applique a toutes les difficultes
+		var validDiffs:Array<String> = Reflect.field(eventsJson, 'validDifficulties');
+
+		var isValidForDiff:Bool = true;
+		if (validDiffs != null && validDiffs.length > 0)
 		{
-			if (d != null && d.toLowerCase() == currentDiffName)
+			isValidForDiff = false;
+			for (d in validDiffs)
 			{
-				isValidForDiff = true;
-				break;
+				if (d != null && d.toLowerCase() == currentDiffName)
+				{
+					isValidForDiff = true;
+					break;
+				}
 			}
 		}
-	}
 
-	if (isValidForDiff)
-	{
-		var eventsData:Array<Dynamic> = eventsJson.events;
-		for (event in eventsData) //Event Notes
+		if (isValidForDiff)
 		{
-			for (i in 0...event[1].length)
+			var eventsData:Array<Dynamic> = eventsJson.events;
+			for (event in eventsData) //Event Notes
 			{
-				var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
-				var eventOffset:Float = (newEventNote[1] == 'playsound') ? 0 : ClientPrefs.noteOffset; // Ignore noteOffset for playsound events
-				var subEvent:EventNote = {
-					strumTime: newEventNote[0] + eventOffset,
-					event: newEventNote[1],
-					value1: newEventNote[2],
-					value2: newEventNote[3]
-				};
-				subEvent.strumTime -= eventNoteEarlyTrigger(subEvent);
-				eventNotes.push(subEvent);
-				eventPushed(subEvent);
+				for (i in 0...event[1].length)
+				{
+					var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
+					var eventOffset:Float = (newEventNote[1] == 'playsound') ? 0 : ClientPrefs.noteOffset; // Ignore noteOffset for playsound events
+					var subEvent:EventNote = {
+						strumTime: newEventNote[0] + eventOffset,
+						event: newEventNote[1],
+						value1: newEventNote[2],
+						value2: newEventNote[3]
+					};
+					subEvent.strumTime -= eventNoteEarlyTrigger(subEvent);
+					eventNotes.push(subEvent);
+					eventPushed(subEvent);
+				}
 			}
 		}
 	}
@@ -2871,46 +2955,59 @@ if (OpenFlAssets.exists(file)) {
 				addCharacterToList(newCharacter, charType);
 
 			case 'Dadbattle Spotlight':
-				dadbattleBlack = new BGSprite(null, -800, -400, 0, 0);
-				dadbattleBlack.makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.BLACK);
-				dadbattleBlack.alpha = 0.25;
-				dadbattleBlack.visible = false;
-				add(dadbattleBlack);
+				// eventPushed est appelé pour CHAQUE event du chart : on ne crée les sprites qu'une seule fois
+				if(dadbattleBlack == null)
+				{
+					dadbattleBlack = new BGSprite(null, -800, -400, 0, 0);
+					dadbattleBlack.makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.BLACK);
+					dadbattleBlack.alpha = 0.25;
+					dadbattleBlack.visible = false;
+					add(dadbattleBlack);
 
-				dadbattleLight = new BGSprite('spotlight', 400, -400);
-				dadbattleLight.alpha = 0.375;
-				dadbattleLight.blend = ADD;
-				dadbattleLight.visible = false;
+					dadbattleLight = new BGSprite('spotlight', 400, -400);
+					dadbattleLight.alpha = 0.375;
+					dadbattleLight.blend = ADD;
+					dadbattleLight.visible = false;
+					add(dadbattleLight);
 
-				dadbattleSmokes.alpha = 0.7;
-				dadbattleSmokes.blend = ADD;
-				dadbattleSmokes.visible = false;
-				add(dadbattleLight);
-				add(dadbattleSmokes);
+					dadbattleLightBF = new BGSprite('spotlight', 400, -400);
+					dadbattleLightBF.alpha = 0.375;
+					dadbattleLightBF.blend = ADD;
+					dadbattleLightBF.visible = false;
+					add(dadbattleLightBF);
 
-				var offsetX = 200;
-				var smoke:BGSprite = new BGSprite('smoke', -1550 + offsetX, 660 + FlxG.random.float(-20, 20), 1.2, 1.05);
-				smoke.setGraphicSize(Std.int(smoke.width * FlxG.random.float(1.1, 1.22)));
-				smoke.updateHitbox();
-				smoke.velocity.x = FlxG.random.float(15, 22);
-				smoke.active = true;
-				dadbattleSmokes.add(smoke);
-				var smoke:BGSprite = new BGSprite('smoke', 1550 + offsetX, 660 + FlxG.random.float(-20, 20), 1.2, 1.05);
-				smoke.setGraphicSize(Std.int(smoke.width * FlxG.random.float(1.1, 1.22)));
-				smoke.updateHitbox();
-				smoke.velocity.x = FlxG.random.float(-15, -22);
-				smoke.active = true;
-				smoke.flipX = true;
-				dadbattleSmokes.add(smoke);
-				blammedLightsBlack = new FlxSprite(FlxG.width * -0.5, FlxG.height * -0.5).makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.BLACK);
-				blammedLightsBlack.visible = false;
-				insert(members.indexOf(phillyStreet), blammedLightsBlack);
+					// normalement créé dans le stage "stage", mais on sécurise pour les autres stages
+					if(dadbattleSmokes == null) dadbattleSmokes = new FlxSpriteGroup();
+					dadbattleSmokes.alpha = 0.9;
+					dadbattleSmokes.blend = ADD;
+					dadbattleSmokes.visible = false;
+					dadbattleSmokes.active = false; // inutile de les mettre à jour tant que le spotlight est éteint
+					add(dadbattleSmokes);
 
-				phillyWindowEvent = new BGSprite('philly/window', phillyWindow.x, phillyWindow.y, 0.3, 0.3);
-				phillyWindowEvent.setGraphicSize(Std.int(phillyWindowEvent.width * 0.85));
-				phillyWindowEvent.updateHitbox();
-				phillyWindowEvent.visible = false;
-				insert(members.indexOf(blammedLightsBlack) + 1, phillyWindowEvent);
+					if(!ClientPrefs.lowQuality) // les fumées (grosses sprites en ADD) sont coûteuses : ignorées en low quality
+					{
+						var smokesPerSide:Int = 3;   // nombre de fumées par côté (augmente pour en voir plus)
+						var smokeSpacing:Float = 600; // écart horizontal entre deux fumées d'un même côté
+						var smokeScaleMin:Float = 0.6; // taille des fumées (1 = taille de l'image, 1.1-1.22 = original)
+						var smokeScaleMax:Float = 0.8;
+						for (side in 0...2)
+						{
+							var fromLeft:Bool = (side == 0);
+							for (j in 0...smokesPerSide)
+							{
+								// départ réparti du hors-champ vers le centre, pour qu'il y en ait toujours à l'écran
+								var startX:Float = fromLeft ? (-1350 + j * smokeSpacing) : (1750 - j * smokeSpacing);
+								var smoke:BGSprite = new BGSprite('smoke', startX, 840 + FlxG.random.float(-40, 20), 1.2, 1.05);
+								smoke.setGraphicSize(Std.int(smoke.width * FlxG.random.float(smokeScaleMin, smokeScaleMax)));
+								smoke.updateHitbox();
+								smoke.velocity.x = FlxG.random.float(20, 35) * (fromLeft ? 1 : -1);
+								smoke.flipX = !fromLeft;
+								smoke.active = true;
+								dadbattleSmokes.add(smoke);
+							}
+						}
+					}
+				}
 		}
 
 		if(!eventPushedMap.exists(event.event)) {
@@ -3151,6 +3248,9 @@ if (OpenFlAssets.exists(file)) {
 
 		super.update(elapsed);
 
+		if (curStage == 'geo')
+			updateEnergyStage(elapsed);
+
 		setOnLuas('curDecStep', curDecStep);
 		setOnLuas('curDecBeat', curDecBeat);
 
@@ -3203,8 +3303,8 @@ if (OpenFlAssets.exists(file)) {
 		iconP1.x = healthBar.x + (healthBar.width * (FlxMath.remapToRange(healthBar.percent, 0, 100, 100, 0) * 0.01)) + (150 * iconP1.scale.x - 150) / 2 - iconOffset;
 		iconP2.x = healthBar.x + (healthBar.width * (FlxMath.remapToRange(healthBar.percent, 0, 100, 100, 0) * 0.01)) - (150 * iconP2.scale.x) / 2 - iconOffset * 2;
 
-		if (health > 2)
-			health = 2;
+		if (health > HEALTH_MAX)
+			health = HEALTH_MAX;
 
 		if (healthBar.percent < 20)
 			iconP1.animation.curAnim.curFrame = 1;
@@ -3452,6 +3552,15 @@ if (OpenFlAssets.exists(file)) {
 		}
 		checkEventNote();
 
+		// Faux Game Over : ~1 s avant la fin de la musique, uniquement sur gangstabattle
+		if (!fakeGameOverChecked && !startingSong && !endingSong && !paused && !isDead && songLength > 0
+			&& (songLength - Conductor.songPosition) <= 500 * playbackRate)
+		{
+			fakeGameOverChecked = true; // évalué une seule fois, même si ce n'est pas la bonne musique
+			if (Paths.formatToSongPath(SONG.song) == 'gangstabattle')
+				startFakeGameOver();
+		}
+
 		#if debug
 		if(!endingSong && !startingSong) {
 			if (FlxG.keys.justPressed.ONE) {
@@ -3555,6 +3664,42 @@ if (OpenFlAssets.exists(file)) {
 	}
 
 	public var isDead:Bool = false; //Don't mess with this on Lua!!!
+
+	// --- Faux Game Over (gangstabattle uniquement) ---
+	var fakeGameOverChecked:Bool = false;
+	var fakeGameOverActive:Bool = false;
+	var fakeGameOverBlack:FlxSprite;
+	var fakeGameOverChar:Boyfriend;
+	function startFakeGameOver():Void
+	{
+		fakeGameOverActive = true;
+
+		// Personnage de mort : même placement que dans GameOverSubstate (à la position réelle de BF dans le décor)
+		fakeGameOverChar = new Boyfriend(boyfriend.x - boyfriend.positionArray[0], boyfriend.y - boyfriend.positionArray[1], GameOverSubstate.characterName);
+		fakeGameOverChar.x += fakeGameOverChar.positionArray[0];
+		fakeGameOverChar.y += fakeGameOverChar.positionArray[1];
+
+		// Fond noir : énorme sprite fixe (scrollFactor 0), centré, quel que soit le zoom de la caméra
+		fakeGameOverBlack = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		fakeGameOverBlack.scale.set(FlxG.width * 4, FlxG.height * 4);
+		fakeGameOverBlack.updateHitbox();
+		fakeGameOverBlack.scrollFactor.set();
+		fakeGameOverBlack.setPosition(FlxG.width / 2 - fakeGameOverBlack.width / 2, FlxG.height / 2 - fakeGameOverBlack.height / 2);
+		add(fakeGameOverBlack);
+		add(fakeGameOverChar); // ajouté après le noir : il passe devant
+
+		// On cache le vrai BF et le HUD pendant l'effet
+		boyfriendGroup.visible = false;
+		camHUD.visible = false;
+
+		fakeGameOverChar.playAnim('firstDeath', true);
+
+		// Sons : on coupe la musique du morceau et on joue le son de mort habituel
+		FlxG.sound.music.volume = 0;
+		vocals.volume = 0;
+		FlxG.sound.play(Paths.sound(GameOverSubstate.deathSoundName));
+	}
+
 	function doDeathCheck(?skipHealthCheck:Bool = false) {
 		if (((skipHealthCheck && instakillOnMiss) || health <= 0) && !practiceMode && !isDead)
 		{
@@ -3620,37 +3765,74 @@ if (OpenFlAssets.exists(file)) {
 	public function triggerEventNote(eventName:String, value1:String, value2:String) {
 		switch(eventName) {
 			case 'Dadbattle Spotlight':
-				var val:Null<Int> = Std.parseInt(value1);
-				if(val == null) val = 0;
-
-				switch(Std.parseInt(value1))
+				// value1 : 0 = désactiver | 1 = lights ON + cibler Dad | 2 = lights ON + cibler BF | 3 = lights ON sur Dad ET BF
+				if(dadbattleBlack != null) // null si l'event n'a pas été chargé via eventPushed
 				{
-					case 1, 2, 3: //enable and target dad
-						if(val == 1) //enable
+					var val:Null<Int> = Std.parseInt(value1);
+					if(val == null) val = 0;
+
+					if(val >= 1 && val <= 3)
+					{
+						if(!dadbattleActive) // activation (une seule fois, évite de dériver le zoom) : valable pour 1, 2 et 3
 						{
-							dadbattleBlack.visible = true;
-							dadbattleLight.visible = true;
+							dadbattleActive = true;
+							dadbattleBlack.visible = true; // fond noir allumé dans les 3 cas
+
+							if(dadbattleSmokesTween != null) dadbattleSmokesTween.cancel();
+							dadbattleSmokes.alpha = 0.9; // remet l'alpha si on réactive pendant le fondu de sortie
 							dadbattleSmokes.visible = true;
-							defaultCamZoom += 0.12;
+							dadbattleSmokes.active = true;
 						}
 
-						var who:Character = dad;
-						if(val > 2) who = boyfriend;
-						//2 only targets dad
-						dadbattleLight.alpha = 0;
-						new FlxTimer().start(0.12, function(tmr:FlxTimer) {
-							dadbattleLight.alpha = 0.375;
-						});
-						dadbattleLight.setPosition(who.getGraphicMidpoint().x - dadbattleLight.width / 2, who.y + who.height - dadbattleLight.height + 50);
+						// quelles lumières sont allumées : 1 = Dad | 2 = BF | 3 = les deux
+						var showDad:Bool = (val == 1 || val == 3);
+						var showBF:Bool = (val == 2 || val == 3);
+						dadbattleLight.visible = showDad;
+						dadbattleLightBF.visible = showBF;
 
-					default:
+						// petit "flash" des spotlights lors du changement de cible
+						dadbattleLight.alpha = 0;
+						dadbattleLightBF.alpha = 0;
+						if(dadbattleLightTimer != null) dadbattleLightTimer.cancel();
+						dadbattleLightTimer = new FlxTimer().start(0.12, function(tmr:FlxTimer) {
+							dadbattleLight.alpha = 0.375;
+							dadbattleLightBF.alpha = 0.375;
+						});
+
+						// décalages de chaque spotlight (X : + = droite | Y : + = bas)
+						var dadLightOffsetX:Float = 0;
+						var dadLightOffsetY:Float = -80;
+						var bfLightOffsetX:Float = 30;
+						var bfLightOffsetY:Float = -30;
+
+						if(showDad)
+						{
+							var midDad:FlxPoint = dad.getGraphicMidpoint();
+							dadbattleLight.setPosition(midDad.x - dadbattleLight.width / 2 + dadLightOffsetX, dad.y + dad.height - dadbattleLight.height + 50 + dadLightOffsetY);
+							midDad.put();
+						}
+						if(showBF)
+						{
+							var midBF:FlxPoint = boyfriend.getGraphicMidpoint();
+							dadbattleLightBF.setPosition(midBF.x - dadbattleLightBF.width / 2 + bfLightOffsetX, boyfriend.y + boyfriend.height - dadbattleLightBF.height + 50 + bfLightOffsetY);
+							midBF.put();
+						}
+					}
+					else if(dadbattleActive) // désactivation
+					{
+						dadbattleActive = false;
 						dadbattleBlack.visible = false;
 						dadbattleLight.visible = false;
-						defaultCamZoom -= 0.12;
-						FlxTween.tween(dadbattleSmokes, {alpha: 0}, 1, {onComplete: function(twn:FlxTween)
+						dadbattleLightBF.visible = false;
+						if(dadbattleLightTimer != null) dadbattleLightTimer.cancel();
+
+						if(dadbattleSmokesTween != null) dadbattleSmokesTween.cancel();
+						dadbattleSmokesTween = FlxTween.tween(dadbattleSmokes, {alpha: 0}, 1, {onComplete: function(twn:FlxTween)
 						{
 							dadbattleSmokes.visible = false;
+							dadbattleSmokes.active = false; // plus de mise à jour tant que c'est caché
 						}});
+					}
 				}
 
 			case 'Hey!':
@@ -4040,7 +4222,7 @@ if (SONG.validScore)
 				
 				// --- FIX DE SAUVEGARDE ---
 				var saveName:String = actualSongName != "" ? actualSongName : SONG.song;
-				if (isStoryMode) saveName = storyPlaylist[0]; // Sécurité pour le mode histoire
+				if (isStoryMode) saveName = StoryMenuState.STORY_KEY_PREFIX + storyPlaylist[0]; // Mode histoire : clé séparée du Freeplay
 				
 				Highscore.saveScore(saveName, songScore, storyDifficulty, percent, songMisses, ratingFC);
 				// -------------------------
@@ -4144,7 +4326,7 @@ if (SONG.validScore)
 					CustomFadeTransition.nextCamera = null;
 				}
 				MusicBeatState.switchState(new FreeplayState());
-				FlxG.sound.playMusic(Paths.music('freakyMenu'));
+				FlxG.sound.music.fadeOut(1, 0); // Freeplay : fondu au lieu de la musique du menu
 				changedDifficulty = false;
 			}
 			transitioning = true;
@@ -4400,7 +4582,40 @@ if (SONG.validScore)
 	{
 		if (practiceMode || cpuControlled) return;
 
-		songScore += 10;
+		// Un segment ne rapporte des points que si la tête de SA longue note a bien été touchée.
+		// Sans ça, maintenir la touche depuis la longue note précédente suffisait à valider les
+		// segments de la suivante (sans avoir touché sa tête) et à encaisser leurs points en plus.
+		var root:Note = note.parent;
+		if (root == null || !root.wasGoodHit) return;
+
+		songScore += SUSTAIN_SEGMENT_SCORE;
+	}
+
+	// Perte de vie pour une note ratée (les notes spéciales gardent leur ratio par rapport à la normale).
+	private function getMissHealthLoss(note:Note):Float
+	{
+		if (Math.abs(note.missHealth - NOTE_DEFAULT_MISS_HEALTH) < 0.0001)
+			return HEALTH_MISS_LOSS;
+		return note.missHealth * (HEALTH_MISS_LOSS / NOTE_DEFAULT_MISS_HEALTH);
+	}
+
+	// Gain de vie pour une note touchée, selon son rang.
+	private function getHitHealthGain(note:Note):Float
+	{
+		var base:Float = HEALTH_HIT_GAIN;
+		if (Math.abs(note.hitHealth - NOTE_DEFAULT_HIT_HEALTH) >= 0.0001)
+			base = note.hitHealth * (HEALTH_HIT_GAIN / NOTE_DEFAULT_HIT_HEALTH);
+
+		var mult:Float = 1;
+		switch (note.rating)
+		{
+			case 'sick': mult = 1;
+			case 'good': mult = 0.7;
+			case 'bad': mult = 0.35;
+			case 'shit': mult = 0.1;
+			default: mult = 1;
+		}
+		return base * mult;
 	}
 
 	public var strumsBlocked:Array<Bool> = [];
@@ -4601,6 +4816,17 @@ if (SONG.validScore)
 		return ret;
 	}
 
+	// Chansons pour lesquelles les voix ne doivent PAS être coupées quand on rate une note
+	function keepVocalsOnMiss():Bool
+	{
+		switch(Paths.formatToSongPath(SONG.song))
+		{
+			case 'crash-out':
+				return true;
+		}
+		return false;
+	}
+
 	function noteMiss(daNote:Note):Void { //You didn't hit the key and let it go offscreen, also used by Hurt Notes
 		//Dupe note remove
 		notes.forEachAlive(function(note:Note) {
@@ -4615,14 +4841,14 @@ if (SONG.validScore)
 		// pas une perte de vie par segment (le score, lui, n'est pas modifié).
 		if (!daNote.isSustainNote)
 		{
-			health -= daNote.missHealth * healthLoss;
+			health -= getMissHealthLoss(daNote) * healthLoss;
 		}
 		else if (daNote.prevNote != null && daNote.prevNote.wasGoodHit)
 		{
 			// On tenait bien la note puis on l'a relâchée en cours de route : petite pénalité
 			// appliquée une seule fois au moment du relâchement (le segment suivant, lui,
 			// n'a pas prevNote.wasGoodHit == true, donc pas de pénalité répétée après ça).
-			health -= daNote.missHealth * healthLoss * 0.5;
+			health -= getMissHealthLoss(daNote) * healthLoss * 0.5;
 		}
 		
 		if(instakillOnMiss)
@@ -4662,7 +4888,7 @@ if (SONG.validScore)
 		// Le score, lui, baisse à chaque segment raté comme dans l'ancienne version,
 		// peu importe qu'il compte ou non comme un miss "affiché".
 		if(!practiceMode) songScore -= 10;
-		vocals.volume = 0;
+		if(!keepVocalsOnMiss()) vocals.volume = 0;
 
 		totalPlayed++;
 		RecalculateRating(true);
@@ -4687,7 +4913,7 @@ if (SONG.validScore)
 
 		if (!boyfriend.stunned)
 		{
-			health -= 0.05 * healthLoss;
+			health -= HEALTH_MISS_PRESS_LOSS * healthLoss;
 			if(instakillOnMiss)
 			{
 				vocals.volume = 0;
@@ -4723,7 +4949,7 @@ if (SONG.validScore)
 			if(boyfriend.hasMissAnimations) {
 				boyfriend.playAnim(singAnimations[Std.int(Math.abs(direction))] + 'miss', true);
 			}
-			vocals.volume = 0;
+			if(!keepVocalsOnMiss()) vocals.volume = 0;
 		}
 		callOnLuas('noteMissPress', [direction]);
 	}
@@ -4835,7 +5061,7 @@ if (SONG.validScore)
 			// pas à chaque petit segment tenu pendant le hold.
 			if (!note.isSustainNote)
 			{
-				health += note.hitHealth * healthGain;
+				health += getHitHealthGain(note) * healthGain;
 			}
 
 			if(!note.noAnimation) {
@@ -5137,9 +5363,6 @@ if (SONG.validScore)
 		precacheList.clear();
 		songPreloadDone = false;
 
-		// Free assets on state exit, not immediately after preload.
-		Paths.clearUnusedMemory();
-
 		super.destroy();
 	}
 
@@ -5148,6 +5371,364 @@ if (SONG.validScore)
 			FlxG.sound.music.fadeTween.cancel();
 		}
 		FlxG.sound.music.fadeTween = null;
+	}
+
+	// ======================================================================
+	//  Stage "test" : Abstract Energy Background (100% genere par code)
+	// ======================================================================
+	function energyPick():Int
+	{
+		return energyPalette[FlxG.random.int(0, energyPalette.length - 1)];
+	}
+
+	// Cree une "barre" blanche teintee, additive, invisible au depart
+	function energyBar(color:Int, sf:Float):FlxSprite
+	{
+		var spr:FlxSprite = new FlxSprite(0, 0).makeGraphic(10, 10, FlxColor.WHITE);
+		spr.color = color;
+		spr.alpha = 0;
+		spr.blend = BlendMode.ADD;
+		spr.scrollFactor.set(sf, sf);
+		spr.antialiasing = ClientPrefs.globalAntialiasing;
+		add(spr);
+		return spr;
+	}
+
+	// Place une barre par son CENTRE, avec longueur / epaisseur / angle
+	function energyPlace(spr:FlxSprite, cx:Float, cy:Float, len:Float, thick:Float, angle:Float):Void
+	{
+		spr.x = cx - 5;
+		spr.y = cy - 5;
+		spr.scale.set(len / 10, thick / 10);
+		spr.angle = angle;
+	}
+
+	function energyBlack(x:Float, y:Float, w:Float, h:Float):Void
+	{
+		var spr:FlxSprite = new FlxSprite(0, 0).makeGraphic(10, 10, FlxColor.BLACK);
+		spr.alpha = ENERGY_VIG_ALPHA;
+		spr.scrollFactor.set(0, 0);
+		energyPlace(spr, x + w / 2, y + h / 2, w, h, 0);
+		add(spr);
+	}
+
+	// Le fond oscille lentement entre deux teintes sombres
+	function updateEnergyBase():Void
+	{
+		var m:Float = (Math.sin(energyT * 0.35) + 1) / 2;
+		energyBase.color = FlxColor.fromRGB(Std.int(8 + (2 - 8) * m), Std.int(3 + (14 - 3) * m), Std.int(26 + (40 - 26) * m));
+	}
+
+	function createEnergyStage():Void
+	{
+		energyT = 0;
+		energyPulse = 0;
+
+		// Fond (tres grand pour couvrir les dezooms de camera)
+		energyBase = new FlxSprite(0, 0).makeGraphic(10, 10, FlxColor.WHITE);
+		energyBase.scrollFactor.set(0, 0);
+		energyPlace(energyBase, ENERGY_CX, ENERGY_CY, 3200, 1900, 0);
+		add(energyBase);
+		updateEnergyBase();
+
+		// Noyau central (3 couches)
+		energyCoreA = energyBar(energyPalette[0], 0);
+		energyCoreB = energyBar(energyPalette[1], 0);
+		energyCoreC = energyBar(0xFFFFFFFF, 0);
+
+		// Tunnel : chaque anneau = 4 barres formant un carre creux
+		for (i in 0...ENERGY_NUM_RINGS)
+		{
+			var c:Int = energyPick();
+			var bars:Array<FlxSprite> = [];
+			for (k in 0...4)
+				bars.push(energyBar(c, 0));
+			energyRings.push({bars: bars, p: i / ENERGY_NUM_RINGS, color: c});
+		}
+
+		// Rayons
+		for (i in 0...ENERGY_NUM_BEAMS)
+		{
+			var spr:FlxSprite = energyBar(energyPick(), 0);
+			energyPlace(spr, ENERGY_CX, ENERGY_CY, 3000, FlxG.random.int(3, 14), 0);
+			energyBeams.push({
+				spr: spr,
+				base: (i + 1) * (180 / ENERGY_NUM_BEAMS),
+				speed: FlxG.random.float(8, 26) * (FlxG.random.bool() ? -1 : 1),
+				alpha: FlxG.random.float(0.10, 0.32),
+				freq: FlxG.random.float(0.8, 2.4),
+				phase: FlxG.random.float(0, 6.28)
+			});
+		}
+
+		// Particules (3 plans de profondeur avec parallaxe)
+		var shardLayers:Array<Dynamic> = [
+			{n: 16, sf: 0.04, smin: 4,  smax: 10,  amin: 0.30, amax: 0.60, vmin: 10, vmax: 35},  // loin
+			{n: 12, sf: 0.15, smin: 10, smax: 28,  amin: 0.25, amax: 0.55, vmin: 30, vmax: 80},  // milieu
+			{n: 6,  sf: 0.40, smin: 50, smax: 120, amin: 0.05, amax: 0.12, vmin: 60, vmax: 140}  // proche
+		];
+		for (lay in shardLayers)
+		{
+			for (i in 0...Std.int(lay.n))
+			{
+				var size:Float = FlxG.random.float(lay.smin, lay.smax);
+				var spr:FlxSprite = energyBar(energyPick(), lay.sf);
+				energyPlace(spr, 0, 0, size, size, 0);
+				energyShards.push({
+					spr: spr,
+					x: FlxG.random.float(-300, 1580),
+					y: FlxG.random.float(-100, 900),
+					vy: FlxG.random.float(lay.vmin, lay.vmax),
+					amp: FlxG.random.float(10, 60),
+					freq: FlxG.random.float(0.5, 2.0),
+					phase: FlxG.random.float(0, 6.28),
+					spin: FlxG.random.float(-120, 120),
+					alpha: FlxG.random.float(lay.amin, lay.amax)
+				});
+			}
+		}
+
+		// Traits de vitesse : partent du centre vers tous les bords
+		for (i in 0...ENERGY_NUM_STREAKS)
+		{
+			energyStreaks.push({
+				spr: energyBar(energyPick(), 0),
+				p: FlxG.random.float(0, 1),
+				ang: FlxG.random.float(0, 6.283),
+				speed: FlxG.random.float(0.25, 0.60),
+				thick: FlxG.random.float(2, 5)
+			});
+		}
+
+		// Particules qui derivent dans toutes les directions (3 profondeurs de parallaxe)
+		var driftSf:Array<Float> = [0.05, 0.12, 0.25];
+		for (i in 0...ENERGY_NUM_DRIFTERS)
+		{
+			var size:Float = FlxG.random.float(3, 14);
+			var dir:Float = FlxG.random.float(0, 6.283);
+			var spd:Float = FlxG.random.float(20, 120);
+			var spr:FlxSprite = energyBar(energyPick(), driftSf[FlxG.random.int(0, 2)]);
+			energyPlace(spr, 0, 0, size, size, 0);
+			energyDrifters.push({
+				spr: spr,
+				x: FlxG.random.float(-300, 1580),
+				y: FlxG.random.float(-250, 970),
+				vx: Math.cos(dir) * spd,
+				vy: Math.sin(dir) * spd,
+				spin: FlxG.random.float(-150, 150),
+				freq: FlxG.random.float(1, 3),
+				phase: FlxG.random.float(0, 6.28),
+				alpha: FlxG.random.float(0.25, 0.70)
+			});
+		}
+
+		// Particules en orbite autour du noyau (orbite aplatie = effet de profondeur)
+		for (i in 0...ENERGY_NUM_ORBITERS)
+		{
+			var size:Float = FlxG.random.float(3, 9);
+			var r:Float = FlxG.random.float(70, 520);
+			var spr:FlxSprite = energyBar(energyPick(), 0);
+			energyPlace(spr, 0, 0, size, size, 45);
+			energyOrbiters.push({
+				spr: spr,
+				r: r,
+				ang: FlxG.random.float(0, 360),
+				w: FlxG.random.float(25, 70) * (FlxG.random.bool() ? -1 : 1) * (200 / r),
+				amp: FlxG.random.float(10, 45),
+				freq: FlxG.random.float(0.4, 1.2),
+				phase: FlxG.random.float(0, 6.28),
+				alpha: FlxG.random.float(0.35, 0.80)
+			});
+		}
+
+		// Eclairs (pool de segments reutilises)
+		for (i in 0...ENERGY_NUM_BOLTS)
+		{
+			var segs:Array<FlxSprite> = [];
+			for (j in 0...ENERGY_SEGS)
+				segs.push(energyBar(0xFFFFFFFF, 0));
+			energyBolts.push({segs: segs, life: 0});
+		}
+
+		// Vignette (bords sombres), calee sur le zoom reel de la camera
+		if (ENERGY_VIGNETTE)
+		{
+			var z:Float = defaultCamZoom;
+			if (z <= 0) z = 1;
+			var hw:Float = ENERGY_CX / z + 40;
+			var hh:Float = ENERGY_CY / z + 40;
+			for (k in 1...(ENERGY_VIG_LAYERS + 1))
+			{
+				var th:Float = k * 70;
+				energyBlack(ENERGY_CX - hw, ENERGY_CY - hh, 2 * hw, th);      // haut
+				energyBlack(ENERGY_CX - hw, ENERGY_CY + hh - th, 2 * hw, th); // bas
+				energyBlack(ENERGY_CX - hw, ENERGY_CY - hh, th, 2 * hh);      // gauche
+				energyBlack(ENERGY_CX + hw - th, ENERGY_CY - hh, th, 2 * hh); // droite
+			}
+		}
+	}
+
+	function energySpawnBolts():Void
+	{
+		for (b in energyBolts)
+		{
+			b.life = 1;
+			var color:Int = energyPick();
+			var ang:Float = FlxG.random.float(0, 6.283);
+			var dist:Float = FlxG.random.float(500, 900);
+			var px:Float = ENERGY_CX;
+			var py:Float = ENERGY_CY;
+			for (j in 0...ENERGY_SEGS)
+			{
+				var along:Float = dist * (j + 1) / ENERGY_SEGS;
+				var lat:Float = FlxG.random.float(-70, 70);
+				var nx:Float = ENERGY_CX + Math.cos(ang) * along - Math.sin(ang) * lat;
+				var ny:Float = ENERGY_CY + Math.sin(ang) * along + Math.cos(ang) * lat;
+				var dx:Float = nx - px;
+				var dy:Float = ny - py;
+				var len:Float = Math.sqrt(dx * dx + dy * dy);
+				var seg:FlxSprite = b.segs[j];
+				energyPlace(seg, (px + nx) / 2, (py + ny) / 2, len + 4, FlxG.random.float(3, 7), Math.atan2(dy, dx) * 180 / Math.PI);
+				seg.color = color;
+				px = nx;
+				py = ny;
+			}
+		}
+		if (ENERGY_BOLT_SHAKE > 0)
+			camGame.shake(ENERGY_BOLT_SHAKE, 0.12);
+	}
+
+	function energyBeatHit():Void
+	{
+		energyPulse = ENERGY_BEAT_PULSE;
+		if (ENERGY_BOLT_EVERY > 0 && curBeat % ENERGY_BOLT_EVERY == 0)
+			energySpawnBolts();
+	}
+
+	function updateEnergyStage(elapsed:Float):Void
+	{
+		if (energyBase == null) return;
+
+		energyT += elapsed;
+		energyPulse = Math.max(0, energyPulse - elapsed * 2.2);
+		updateEnergyBase();
+
+		// Noyau
+		var s:Float = 1 + Math.sin(energyT * 2) * 0.08 + energyPulse * 0.5;
+		energyPlace(energyCoreA, ENERGY_CX, ENERGY_CY, 340 * s, 340 * s, 45 + energyT * 25);
+		energyPlace(energyCoreB, ENERGY_CX, ENERGY_CY, 230 * s * 1.1, 230 * s * 1.1, -energyT * 40);
+		energyPlace(energyCoreC, ENERGY_CX, ENERGY_CY, 90 * s, 90 * s, energyT * 90);
+		energyCoreA.alpha = 0.16 + energyPulse * 0.30;
+		energyCoreB.alpha = 0.20 + energyPulse * 0.35;
+		energyCoreC.alpha = 0.35 + energyPulse * 0.50;
+
+		// Rayons
+		for (b in energyBeams)
+		{
+			b.spr.angle = b.base + energyT * b.speed;
+			var a:Float = b.alpha * (0.6 + 0.4 * Math.sin(energyT * b.freq + b.phase)) + energyPulse * 0.25;
+			b.spr.alpha = Math.min(a, 1);
+		}
+
+		// Tunnel (perspective : le rayon et l'epaisseur grandissent de plus en plus vite)
+		var speed:Float = ENERGY_TUNNEL_SPEED * (1 + energyPulse * 2.5);
+		for (r in energyRings)
+		{
+			r.p += elapsed * speed;
+			if (r.p >= 1)
+			{
+				r.p -= 1;
+				r.color = energyPick();
+				for (b0 in r.bars)
+					b0.color = r.color;
+			}
+
+			var p:Float = r.p;
+			var radius:Float = 8 + Math.pow(p, 2.3) * 1100;
+			var thick:Float = 2 + p * p * 34;
+			var fadeIn:Float = Math.min(p / 0.12, 1);
+			var alpha:Float = Math.min(fadeIn * (1 - p) * 1.1, 1) * (0.55 + energyPulse * 0.45);
+			var theta:Float = energyT * 10 + p * ENERGY_TUNNEL_TWIST;
+
+			for (k in 0...4)
+			{
+				var a:Float = theta + k * 90;
+				var rad:Float = a * Math.PI / 180;
+				var bar:FlxSprite = r.bars[k];
+				energyPlace(bar, ENERGY_CX + radius * Math.cos(rad), ENERGY_CY + radius * Math.sin(rad), 2 * radius + thick, thick, a + 90);
+				bar.alpha = alpha;
+			}
+		}
+
+		// Particules (3 plans)
+		for (p in energyShards)
+		{
+			p.y -= p.vy * elapsed;
+			if (p.y < -250)
+			{
+				p.y = 970;
+				p.x = FlxG.random.float(-300, 1580);
+			}
+			p.spr.x = p.x + Math.sin(energyT * p.freq + p.phase) * p.amp - 5;
+			p.spr.y = p.y - 5;
+			p.spr.angle = energyT * p.spin;
+			p.spr.alpha = Math.min(p.alpha + energyPulse * 0.25, 1);
+		}
+
+		// Traits de vitesse (warp) : naissent au centre et s'etirent vers les bords
+		for (st in energyStreaks)
+		{
+			st.p += elapsed * st.speed * (1 + energyPulse * 2);
+			if (st.p >= 1)
+			{
+				st.p = 0;
+				st.ang = FlxG.random.float(0, 6.283);
+				st.spr.color = energyPick();
+			}
+			var p2:Float = st.p * st.p;
+			var dist:Float = 40 + p2 * 1000;
+			var len:Float = 6 + p2 * 220;
+			energyPlace(st.spr, ENERGY_CX + Math.cos(st.ang) * dist, ENERGY_CY + Math.sin(st.ang) * dist, len, st.thick, st.ang * 180 / Math.PI);
+			st.spr.alpha = Math.min(st.p / 0.1, 1) * (1 - st.p) * (0.5 + energyPulse * 0.4);
+		}
+
+		// Particules qui derivent dans toutes les directions
+		for (d in energyDrifters)
+		{
+			d.x += d.vx * elapsed;
+			d.y += d.vy * elapsed;
+			if (d.x < -300) d.x = 1580; else if (d.x > 1580) d.x = -300;
+			if (d.y < -250) d.y = 970; else if (d.y > 970) d.y = -250;
+			d.spr.x = d.x - 5;
+			d.spr.y = d.y - 5;
+			d.spr.angle = energyT * d.spin;
+			d.spr.alpha = Math.min(d.alpha * (0.65 + 0.35 * Math.sin(energyT * d.freq + d.phase)) + energyPulse * 0.2, 1);
+		}
+
+		// Particules en orbite autour du noyau
+		for (o in energyOrbiters)
+		{
+			o.ang += o.w * elapsed;
+			var r:Float = (o.r + Math.sin(energyT * o.freq + o.phase) * o.amp) * (1 + energyPulse * 0.12);
+			var rad:Float = o.ang * Math.PI / 180;
+			o.spr.x = ENERGY_CX + r * Math.cos(rad) - 5;
+			o.spr.y = ENERGY_CY + r * Math.sin(rad) * 0.6 - 5;
+			o.spr.alpha = Math.min(o.alpha * (0.7 + 0.3 * Math.sin(energyT * o.freq * 2 + o.phase)) + energyPulse * 0.3, 1);
+		}
+
+		// Eclairs (fondu rapide avec scintillement)
+		for (b in energyBolts)
+		{
+			if (b.life > 0)
+			{
+				b.life -= elapsed * 3.5;
+				var a:Float = 0;
+				if (b.life > 0)
+					a = b.life * (0.6 + 0.4 * FlxG.random.float(0, 1));
+				for (seg in b.segs)
+					seg.alpha = a;
+			}
+		}
 	}
 
 	var lastStepHit:Int = -1;
@@ -5209,6 +5790,9 @@ if (SONG.validScore)
 
 		switch (curStage)
 		{
+			case 'geo':
+				energyBeatHit();
+
 			case 'tank':
 				if(!ClientPrefs.lowQuality) tankWatchtower.dance();
 				foregroundSprites.forEach(function(spr:BGSprite)

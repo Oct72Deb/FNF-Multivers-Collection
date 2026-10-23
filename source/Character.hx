@@ -74,6 +74,7 @@ class Character extends FlxSprite
 	//Used on Character Editor
 	public var imageFile:String = '';
 	public var jsonScale:Float = 1;
+	public var feetGap:Float = 0; //Distance entre les pieds (dernier pixel visible) et le bas du cadre, en pixels
 	public var noAntialiasing:Bool = false;
 	public var originalFlipX:Bool = false;
 	public var healthColorArray:Array<Int> = [255, 0, 0];
@@ -219,6 +220,13 @@ class Character extends FlxSprite
 		if(animOffsets.exists('singLEFTmiss') || animOffsets.exists('singDOWNmiss') || animOffsets.exists('singUPmiss') || animOffsets.exists('singRIGHTmiss')) hasMissAnimations = true;
 		recalculateDanceIdle();
 		dance();
+		// Distance entre les pieds et le bas du cadre (pour le script size_steal.lua)
+		var feetBmp = updateFramePixels();
+		if (feetBmp != null)
+		{
+			var feetRect = feetBmp.getColorBoundsRect(0xFF000000, 0x00000000, false);
+			if (feetRect.height > 0) feetGap = frameHeight - (feetRect.y + feetRect.height);
+		}
 
 		if (isPlayer)
 		{

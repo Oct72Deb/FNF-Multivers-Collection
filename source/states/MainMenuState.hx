@@ -230,6 +230,7 @@ class MainMenuState extends MusicBeatState
 	static var cachedArtworkFolder:String = null;
 
 	var artworkSettings:Map<String, MenuArtworkConfig> = [
+		'helene' => {x: 680, y: 50, scale: 1.3},
 		'oceane' => {x: 700, y: 50, scale: 0.8},
 		'sackboy' => {x: 750, y: 150, scale: 0.7},
 		'metal' => {x: 650, y: 50, scale: 0.7},
@@ -284,6 +285,7 @@ class MainMenuState extends MusicBeatState
 	var selectedCharDisplayNames:Map<String, String> = [
 		'metal' => 'Metal Mario',
 		'oceane' => 'Océane',
+		'helene' => 'Hélène',
 		'sackboy' => 'Sackboy',
 	];
 

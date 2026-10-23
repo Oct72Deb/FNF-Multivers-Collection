@@ -42,21 +42,68 @@ class FreeplayState extends MusicBeatState
 	var prewiewInst:FlxSound;
 	var scoreBG:FlxSprite;
 	var scoreText:FlxText;
-	var diffText:FlxText;
 	var missesText:FlxText;
 	var rankText:FlxText;
 	var cheatHintText:FlxText;
 	var cheatHintBg:FlxSprite;
 	static inline var CHEAT_HINT_PAD:Float = 8; // marge autour du texte pour le fond
+	static inline var CHEAT_HINT_GAP:Float = 12; // espace libre entre le message et le bas de la colonne poster / difficultés / barre
+	// Bas de la colonne de droite d'ArtworkSubstate : haut du fond du message "victoire" moins CHEAT_HINT_GAP.
+	// Renseigné par setCheatHintMessage() (donc avant l'ouverture du substate) ; 0 = pas encore calculé.
+	public static var columnBottomY:Float = 0;
 
-	// --- Points sous "MISSES: x  RANK: y" : un point par difficulté disponible
-	// pour la chanson sélectionnée, celui de la difficulté courante étant coloré. ---
-	var diffDotsGroup:FlxTypedGroup<FlxSprite>;
-	static inline var DOT_RADIUS:Float = 5;
-	static inline var DOT_GAP:Float = 16;
-	static inline var DOT_COLOR_CURRENT:FlxColor = 0xFF46E2D2; // teal, comme sur le concept art
-	static inline var DOT_COLOR_OTHER:FlxColor = FlxColor.WHITE;
 	// -----------------------------------------------------------------------
+
+	// --- Marge d'écran commune ---------------------------------------------------------
+	// Une seule marge d'écran pour les checkboxes Practice Mode / Botplay (haut / gauche) et la colonne
+	// poster / difficultés / barre d'ArtworkSubstate (côté droit) : pas de coordonnées indépendantes.
+	public static inline var SCREEN_MARGIN:Float = 30;
+	static inline var SONG_UNSELECTED_ALPHA:Float = 0.35; // opacité des musiques (titre + icône) non sélectionnées (avant : 0.6)
+	static inline var SONG_VISIBLE_RANGE:Int = 1;         // nombre de musiques affichées au-dessus ET au-dessous de la sélection (1 = précédente + suivante) ; les autres sont masquées
+	static inline var SONG_FADE_SPEED:Float = 20;         // vitesse du fondu des titres / icônes qui apparaissent ou disparaissent
+	var songAlphaSnapped:Bool = false;                    // true une fois les opacités initiales appliquées (pas de fondu au premier affichage)
+
+	// --- Graphiques de difficulté (images/menudifficulties/<difficulté>.png) -------------
+	// Comme dans le Story Mode : SEULE la difficulté actuelle est affichée (SOUS LA BARRE DE DIFFICULTÉ, colonne de
+	// droite d'ArtworkSubstate : poster -> barre -> graphique), centrée sur l'axe de la colonne, avec en dessous une
+	// rangée de POINTS (un par difficulté disponible, celui de la difficulté actuelle en cyan, les autres en blanc),
+	// et les deux FLÈCHES bleues de chaque côté (mêmes sprites / animations que le Story Mode).
+	// Au changement de difficulté, l'ancien graphique s'efface et le nouveau apparaît au même endroit.
+	var diffGraphicsGroup:FlxTypedGroup<DiffMenuItem>;
+	var diffItems:Array<DiffMenuItem> = [];       // graphiques actuellement affichés (1 par difficulté)
+	var dyingDiffItems:Array<DiffMenuItem> = [];  // anciens graphiques en train de disparaître en fondu
+	var diffGraphicsKey:String = '';              // identifie la liste affichée (évite de tout recréer pour rien)
+	var diffDotsGroup:FlxTypedGroup<FlxSprite>;   // points sous le graphique : un par difficulté disponible
+	var diffArrowLeft:FlxSprite;                  // flèches bleues de part et d'autre du graphique (comme le Story Mode)
+	var diffArrowRight:FlxSprite;
+	var lastShownDifficulty:Int = -1;
+	// Position et largeur de la zone : calculées par ArtworkSubstate.layoutColumn() et recopiées ici par
+	// syncDiffZone() (aucune coordonnée en dur). Tant que le substate n'a pas fini son create(), rien n'est affiché.
+	var diffZoneReady:Bool = false;
+	var diffZoneCX:Float = 0;        // axe vertical de la colonne (centre de la zone)
+	var diffZoneTop:Float = 0;       // haut de la zone (sous la barre de difficulté)
+	var diffZoneHeight:Float = DIFF_ZONE_HEIGHT;  // hauteur de la zone, recopiée d'ArtworkSubstate
+	var diffZoneWidth:Float = 320;   // largeur TOTALE de la zone (px) = largeur de la colonne du poster
+	public static inline var DIFF_ZONE_HEIGHT:Float = 180;  // hauteur FIXE de la zone sous la barre (si plusieurs lignes, tout est réduit pour tenir) ; lue par ArtworkSubstate
+	static inline var DIFF_SELECTOR_SCALE:Float = 0.8;   // échelle du graphique par rapport à sa taille d'origine (même valeur que le Story Mode)
+	static inline var DIFF_SLOT_HEIGHT:Float = 80;       // hauteur FIXE de l'emplacement du graphique (px) : les points restent alignés quelle que soit l'image
+	static inline var DIFF_ARROW_GAP:Float = 10;         // espace entre le graphique et chaque flèche (comme le Story Mode)
+	static inline var DIFF_DOTS_DROP:Float = 14;         // espace entre l'emplacement du graphique et les points
+	static inline var DIFF_DOT_SIZE:Float = 7;           // diamètre d'un point (comme le Story Mode)
+	static inline var DIFF_DOT_SPACING:Float = 6;        // espace entre deux points (comme le Story Mode)
+	static inline var DIFF_DROP:Float = 15;              // le nouveau graphique descend de ce nombre de px en apparaissant (comme le Story Mode)
+	static inline var DIFF_IN_SPEED:Float = 22;          // vitesse de l'apparition du nouveau graphique (plus grand = plus rapide)
+	static inline var DIFF_SLIDE_X:Float = 60;           // distance du glissement d'entrée / sortie (depuis / vers la gauche) lors d'un changement de liste
+
+	// Dossier de graphiques par défaut, et dossiers spécifiques à certaines Weeks (nom du fichier de
+	// la week en minuscules -> sous-dossier de menudifficulties). Pour ajouter une autre week, ajoute une ligne.
+	static inline var DIFF_FOLDER_DEFAULT:String = 'menudifficulties';
+	static inline var DIFF_FOLDER_FREEPLAY:String = 'menudifficulties/freeplay'; // dossier PRIORITAIRE pour toutes les weeks sans dossier spécifique
+	static final DIFF_WEEK_FOLDERS:Map<String, String> = [
+		"weeka" => "smash"   // images/menudifficulties/smash/<difficulté>.png
+	];
+
+	// ------------------------------------------------------------------------------------
 	static inline var CHEAT_HINT_MESSAGE:String = 'Type "victoire" on your keyboard to reset the score.';
 	static inline var CHEAT_SUCCESS_MESSAGE:String = 'Reset completed successfully.';
 	var lerpScore:Int = 0;
@@ -85,32 +132,12 @@ class FreeplayState extends MusicBeatState
 	var bgUpdateTimer:FlxTimer;
 	var bgTween:FlxTween; // le fondu du fond actuellement en cours (pour pouvoir l'annuler)
 	var pendingNewBg:FlxSprite; // sprite en cours de fondu, pas encore validé comme "bg" final
+	var bgFadingLayers:Array<FlxSprite> = []; // couches de fond en cours de fondu (de la plus ancienne à la plus récente)
+	var bgLookupCache:Map<String, String> = new Map(); // résultats de findSongBackground() (évite de refaire les tests de fichiers à chaque scroll) ; '' = aucun fond trouvé
 
 	// Nom du fond actuellement affiché (sans extension), utilisé pour savoir
 	// si on doit charger une nouvelle image ou juste retween la couleur
 	var curBgPath:String = 'menuDesat';
-
-	// ==============================================
-	// FONDS HARDCODÉS PAR CHANSON
-	// Clé = nom de la chanson FORMATÉ, c'est-à-dire le nom du dossier
-	// dans data/<musicName>/ et songs/<musicName>/ (même clé que celle
-	// utilisée plus bas pour charger l'Inst : Paths.formatToSongPath).
-	// En pratique : minuscules, espaces remplacés par des tirets.
-	// Valeur = nom du fichier image (sans extension) dans images/ du mod.
-	// Ex : "Periple" -> data/periple/ -> clé 'periple' -> HellBG
-	// ==============================================
-	static var hardcodedBackgrounds:Map<String, String> = [
-		'periple' => 'freeplay/freeplayBG/periple',
-		'allocution' => 'freeplay/freeplayBG/allocution',
-		'crash-out' => 'freeplay/freeplayBG/crash_out',
-		'new-game' => 'freeplay/freeplayBG/new_game',
-		'criminal-targets' => 'freeplay/freeplayBG/criminal_targets',
-		'how-to-play' => 'freeplay/freeplayBG/how_to_play',
-		'metal-reflection' => 'freeplay/freeplayBG/metal_reflection',
-		'gangstabattle' => 'freeplay/freeplayBG/gangstabattle',
-		'starlight' => 'freeplay/freeplayBG/starlight',
-		// 'nom-de-la-chanson' => 'NomDuFond',
-	];
 
 	override function sectionHit()
 	{
@@ -132,6 +159,12 @@ class FreeplayState extends MusicBeatState
 		Paths.clearUnusedMemory();
 
 		persistentUpdate = true;
+
+		// Coupe la musique du menu principal en arrivant dans le Freeplay
+		// (sauf si un fondu de sortie de chanson est en cours : on le laisse finir)
+		if (FlxG.sound.music != null && (FlxG.sound.music.fadeTween == null || FlxG.sound.music.fadeTween.finished))
+			FlxG.sound.music.stop();
+
 		PlayState.isStoryMode = false;
 		WeekData.reloadWeekFiles(false);
 
@@ -201,7 +234,22 @@ for (i in 0...WeekData.weeksList.length) {
 					songDifficulties = Std.string(song[4]);
 				}
 
-				addSong(song[0], i, song[1], FlxColor.fromRGB(colors[0], colors[1], colors[2]), diffIcons, songDifficulties);
+				// 6e élément optionnel : couleur de fond PAR DIFFICULTÉ, au format
+				// { "hard": [255, 0, 0], "erect": [10, 20, 30] } (clé = nom de la difficulté en minuscules).
+				// Si une difficulté n'y figure pas, la couleur de la chanson (3e élément) est utilisée.
+				var diffColors:Map<String, Int> = new Map();
+				var rawDiffColors:Dynamic = (song.length > 5) ? song[5] : null;
+				if(rawDiffColors != null)
+				{
+					for(f in Reflect.fields(rawDiffColors))
+					{
+						var c:Array<Int> = Reflect.field(rawDiffColors, f);
+						if(c != null && c.length >= 3)
+							diffColors.set(f.toLowerCase().trim(), FlxColor.fromRGB(c[0], c[1], c[2]));
+					}
+				}
+
+				addSong(song[0], i, song[1], FlxColor.fromRGB(colors[0], colors[1], colors[2]), diffIcons, songDifficulties, diffColors);
 			}
 		}
 		WeekData.loadTheFirstEnabledMod();
@@ -213,11 +261,15 @@ for (i in 0...WeekData.weeksList.length) {
 		Paths.image('nglaupokbg');
 		for (song in songs)
 		{
-			Paths.currentModDirectory = song.folder;
-			var songKey:String = Paths.formatToSongPath(song.songName);
-			var bgName:String = hardcodedBackgrounds.get(songKey);
-			if (bgName != null)
-				Paths.image(bgName);
+			// Fond de base (sans difficulté) puis un fond par difficulté possible de la chanson
+			var diffNames:Array<String> = getSongDifficultyNames(song);
+			diffNames.unshift(null);
+			for (diffName in diffNames)
+			{
+				var bgName:String = findSongBackground(song, diffName);
+				if (bgName != null)
+					Paths.image(bgName);
+			}
 		}
 
 		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
@@ -284,25 +336,49 @@ for (i in 0...WeekData.weeksList.length) {
 		scoreBG.alpha = 0.0;
 		add(scoreBG);
 
-		diffText = new FlxText(scoreText.x, scoreText.y + 36, 0, "", 24);
-		diffText.font = scoreText.font;
-		add(diffText);
-
-		// --- Nombre de misses sur la musique sélectionnée (à droite de la difficulté) ---
-		missesText = new FlxText(scoreText.x, diffText.y, 0, "", 24);
+		// --- Nombre de misses sur la musique sélectionnée (la difficulté n'a plus de texte :
+		// elle est affichée par les graphiques de menudifficulties, voir updateDifficultyGraphics) ---
+		missesText = new FlxText(scoreText.x, scoreText.y + 36, 0, "", 24);
 		missesText.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE, LEFT);
 		add(missesText);
 
 		// --- Rang obtenu sur la musique sélectionnée (SFC, GFC, etc.), collé à droite ---
-		rankText = new FlxText(scoreText.x, diffText.y, 0, "", 24);
+		rankText = new FlxText(scoreText.x, missesText.y, 0, "", 24);
 		rankText.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE, LEFT);
 		add(rankText);
 		// -----------------------------------------------------
 
-		// --- Points de difficulté (voir déclaration du groupe plus haut) ---
+		diffGraphicsGroup = new FlxTypedGroup<DiffMenuItem>();
+		add(diffGraphicsGroup);
+
 		diffDotsGroup = new FlxTypedGroup<FlxSprite>();
 		add(diffDotsGroup);
-		// --------------------------------------------------------------------
+
+		// Flèches du sélecteur de difficulté : même atlas et mêmes animations que le Story Mode.
+		// Cachées tant que la zone sous le poster n'est pas connue (placées par placeDiffArrows()).
+		var uiTex = Paths.getSparrowAtlas('campaign_menu_UI_assets');
+
+		diffArrowRight = new FlxSprite(0, 0);
+		diffArrowRight.frames = uiTex;
+		diffArrowRight.animation.addByPrefix('idle', 'arrow right');
+		diffArrowRight.animation.addByPrefix('press', 'arrow push right', 24, false);
+		diffArrowRight.animation.play('idle');
+		diffArrowRight.antialiasing = ClientPrefs.globalAntialiasing;
+		diffArrowRight.scale.set(DIFF_SELECTOR_SCALE, DIFF_SELECTOR_SCALE);
+		diffArrowRight.updateHitbox();
+		diffArrowRight.visible = false;
+		add(diffArrowRight);
+
+		diffArrowLeft = new FlxSprite(0, 0);
+		diffArrowLeft.frames = uiTex;
+		diffArrowLeft.animation.addByPrefix('idle', 'arrow left');
+		diffArrowLeft.animation.addByPrefix('press', 'arrow push left');
+		diffArrowLeft.animation.play('idle');
+		diffArrowLeft.antialiasing = ClientPrefs.globalAntialiasing;
+		diffArrowLeft.scale.set(DIFF_SELECTOR_SCALE, DIFF_SELECTOR_SCALE);
+		diffArrowLeft.updateHitbox();
+		diffArrowLeft.visible = false;
+		add(diffArrowLeft);
 
 		add(scoreText);
 
@@ -325,7 +401,7 @@ for (i in 0...WeekData.weeksList.length) {
 		// sans fondu puisqu'on est à l'ouverture du state
 		curBgPath = 'menuDesat';
 		updateBackground(curSelected, false);
-		intendedColor = songs[curSelected].color;
+		intendedColor = getSongColor(songs[curSelected]);
 
 		if(lastDifficultyName == '')
 		{
@@ -335,6 +411,10 @@ for (i in 0...WeekData.weeksList.length) {
 
 		changeSelection();
 		changeDiff();
+
+		// La difficulté est maintenant connue : on réapplique le fond (au cas où il en existe un
+		// propre à cette difficulté), directement et sans fondu puisqu'on est à l'ouverture du state
+		updateBackground(curSelected, false);
 
 		var swag:Alphabet = new Alphabet(1, 0, "swag");
 
@@ -351,7 +431,7 @@ for (i in 0...WeekData.weeksList.length) {
 		// openSubState() diffère create() au tick suivant : appeler updateArtworkForSong()
 		// ou setDifficulty() ici causerait un Null Object Reference (artImage pas encore créé).
 		// ArtworkSubstate.create() applique ces valeurs lui-même en fin d'initialisation.
-		openSubState(new substates.ArtworkSubstate(weekName, songs[curSelected].songName, curDifficulty, songs[curSelected].color));
+		openSubState(new substates.ArtworkSubstate(weekName, songs[curSelected].songName, curDifficulty, getSongColor(songs[curSelected])));
 	}
 
 	override function closeSubState() {
@@ -360,9 +440,9 @@ for (i in 0...WeekData.weeksList.length) {
 		super.closeSubState();
 	}
 
-	public function addSong(songName:String, weekNum:Int, songCharacter:String, color:Int, ?diffIcons:Map<String, String>, ?songDifficulties:String)
+	public function addSong(songName:String, weekNum:Int, songCharacter:String, color:Int, ?diffIcons:Map<String, String>, ?songDifficulties:String, ?diffColors:Map<String, Int>)
 	{
-		songs.push(new SongMetadata(songName, weekNum, songCharacter, color, diffIcons, songDifficulties));
+		songs.push(new SongMetadata(songName, weekNum, songCharacter, color, diffIcons, songDifficulties, diffColors));
 	}
 
 	function weekIsLocked(name:String):Bool {
@@ -468,10 +548,11 @@ for (i in 0...WeekData.weeksList.length) {
 	}
 
 	// Recharge l'icône d'une entrée de la liste selon la difficulté courante
-	function refreshIcon(songIndex:Int):Void
+	// (forceDefault = true : remet l'icône par défaut de la chanson, sans tenir compte de la difficulté)
+	function refreshIcon(songIndex:Int, forceDefault:Bool = false):Void
 	{
 		var icon = iconArray[songIndex];
-		var charName = getIconCharForDiff(songIndex);
+		var charName = forceDefault ? songs[songIndex].songCharacter : getIconCharForDiff(songIndex);
 
 		Paths.currentModDirectory = songs[songIndex].folder;
 
@@ -494,6 +575,89 @@ for (i in 0...WeekData.weeksList.length) {
 		icon.updateHitbox();
 	}
 
+	// Dossier (dans images/ du mod) où le jeu cherche automatiquement un fond par chanson.
+	static inline var AUTO_BG_FOLDER:String = 'freeplay/freeplayBG/';
+
+	// Liste toutes les difficultés possibles d'une chanson (celles de la chanson, celles de sa week, et les
+	// difficultés par défaut). Sert au préchargement des fonds par difficulté.
+	function getSongDifficultyNames(song:SongMetadata):Array<String>
+	{
+		var names:Array<String> = CoolUtil.defaultDifficulties.copy();
+		var sources:Array<String> = [song.difficulties];
+
+		var weekFileName:String = WeekData.weeksList[song.week];
+		var week:WeekData = (weekFileName != null) ? WeekData.weeksLoaded.get(weekFileName) : null;
+		if (week != null) sources.push(week.difficulties);
+
+		for (src in sources)
+		{
+			if (src == null || src.trim().length < 1) continue;
+			for (d in parseDifficultiesString(src))
+			{
+				if (!names.contains(d)) names.push(d);
+			}
+		}
+		return names;
+	}
+
+	// Trouve tout seul le fond d'une chanson, sans aucune liste à maintenir. Il suffit de déposer des images
+	// dans images/freeplay/freeplayBG/ du mod :
+	//   - <nom>.png              : fond de la chanson (toutes difficultés)
+	//   - <nom>-<difficulté>.png : fond propre à une difficulté (ex : periple-hard.png), prioritaire sur le précédent
+	// <nom> est essayé dans cet ordre : le nom formaté de la chanson (ex : crash-out), le même avec des _
+	// (crash_out), puis le nom brut de la chanson tel qu'écrit dans la week (avec espaces, puis avec des _).
+	// diffName = nom de la difficulté (ex : "Hard"), null pour ne chercher que le fond de base.
+	// Retourne null si rien n'est trouvé (le fond par défaut sera alors utilisé).
+	function findSongBackground(song:SongMetadata, ?diffName:String):String
+	{
+		var songKey:String = Paths.formatToSongPath(song.songName);
+		var diffKey:String = (diffName != null) ? diffName.trim() : '';
+
+		var cacheKey:String = song.folder + '|' + songKey + '|' + diffKey.toLowerCase();
+		if (bgLookupCache.exists(cacheKey))
+		{
+			var cached:String = bgLookupCache.get(cacheKey);
+			return (cached == '') ? null : cached;
+		}
+
+		Paths.currentModDirectory = song.folder;
+		var bases:Array<String> = [
+			songKey,
+			songKey.replace('-', '_'),
+			song.songName,
+			song.songName.replace(' ', '_')
+		];
+
+		var result:String = null;
+
+		// 1) fond propre à la difficulté : <nom>-<difficulté>.png
+		if (diffKey != '')
+		{
+			var diffVariants:Array<String> = [Paths.formatToSongPath(diffKey), diffKey];
+			for (base in bases)
+			{
+				for (dv in diffVariants)
+				{
+					if (result == null && Paths.fileExists('images/' + AUTO_BG_FOLDER + base + '-' + dv + '.png', IMAGE))
+						result = AUTO_BG_FOLDER + base + '-' + dv;
+				}
+			}
+		}
+
+		// 2) sinon fond de base de la chanson : <nom>.png
+		if (result == null)
+		{
+			for (base in bases)
+			{
+				if (result == null && Paths.fileExists('images/' + AUTO_BG_FOLDER + base + '.png', IMAGE))
+					result = AUTO_BG_FOLDER + base;
+			}
+		}
+
+		bgLookupCache.set(cacheKey, (result == null) ? '' : result);
+		return result;
+	}
+
 	// Point d'entrée appelé à chaque changement de sélection.
 	// Debounce : on attend un court instant sans nouveau changement avant de
 	// vraiment charger/fondre le fond, pour éviter que les fondus s'empilent
@@ -513,27 +677,40 @@ for (i in 0...WeekData.weeksList.length) {
 			return;
 		}
 
-		bgUpdateTimer = new FlxTimer().start(0.06, function(twn:FlxTimer)
+		bgUpdateTimer = new FlxTimer().start(0.03, function(twn:FlxTimer)
 		{
 			bgUpdateTimer = null;
 			doUpdateBackground(index, true);
 		});
 	}
 
+	// Couleur de fond d'une chanson pour la difficulté ACTUELLE : la couleur propre à la difficulté
+	// (6e élément du JSON, réglée dans le Weeks Editor) si elle existe, sinon la couleur de la chanson.
+	function getSongColor(song:SongMetadata):Int
+	{
+		if (curDifficulty >= 0 && curDifficulty < CoolUtil.difficulties.length)
+		{
+			var key:String = CoolUtil.difficulties[curDifficulty].toLowerCase().trim();
+			if (song.difficultyColors.exists(key))
+				return song.difficultyColors.get(key);
+		}
+		return song.color;
+	}
+
 	function doUpdateBackground(index:Int, playTween:Bool):Void
 	{
 		var song = songs[index];
+		var targetColor:Int = getSongColor(song);
 
-		// Priorité 1 : fond hardcodé pour cette chanson (map ci-dessus)
-		// Priorité 2 : fond par défaut (le JSON de la week n'est plus consulté)
-		// La clé utilisée est la même que celle utilisée pour charger l'Inst
-		// (Paths.formatToSongPath), donc le nom du dossier dans data/<musicName>
+		// Priorité 1 : fond détecté automatiquement pour la difficulté actuelle (<chanson>-<difficulté>.png)
+		// Priorité 2 : fond détecté automatiquement pour la chanson (<chanson>.png)
+		// Priorité 3 : fond par défaut (le JSON de la week n'est plus consulté)
 		var bgPath:String = 'nglaupokbg';
-		var songKey:String = Paths.formatToSongPath(song.songName);
-		var hardcoded:String = hardcodedBackgrounds.get(songKey);
-		if (hardcoded != null)
+		var curDiffName:String = (curDifficulty >= 0 && curDifficulty < CoolUtil.difficulties.length) ? CoolUtil.difficulties[curDifficulty] : null;
+		var found:String = findSongBackground(song, curDiffName);
+		if (found != null)
 		{
-			bgPath = hardcoded;
+			bgPath = found;
 		}
 
 		Paths.currentModDirectory = song.folder;
@@ -546,61 +723,74 @@ for (i in 0...WeekData.weeksList.length) {
 			graphic = Paths.image(bgPath);
 		}
 
-		// Si c'est le même fond que celui déjà affiché, on ne fait que retween la couleur
+		// Couche la plus haute actuellement affichée / en fondu (sinon le fond de base).
+		// C'est elle qui représente "le dernier fond demandé".
+		var topBg:FlxSprite = (bgFadingLayers.length > 0) ? bgFadingLayers[bgFadingLayers.length - 1] : bg;
+
+		// Si c'est le même fond que celui déjà demandé, on ne fait que retween la couleur
+		// (sur la couche du dessus, pas sur l'ancien fond qui est en train de disparaître)
 		if(bgPath == curBgPath)
 		{
 			if(colorTween != null) colorTween.cancel();
-			intendedColor = song.color;
-			colorTween = FlxTween.color(bg, 1, bg.color, intendedColor, {
+			intendedColor = targetColor;
+			if(!playTween)
+			{
+				// Ouverture du state : pas de fondu de couleur
+				topBg.color = intendedColor;
+				colorTween = null;
+				return;
+			}
+			colorTween = FlxTween.color(topBg, 1, topBg.color, intendedColor, {
 				onComplete: function(twn:FlxTween) { colorTween = null; }
 			});
 			return;
 		}
 
 		curBgPath = bgPath;
-		intendedColor = song.color;
+		intendedColor = targetColor;
 
 		if(playTween)
 		{
-			// Annule un éventuel fondu de fond encore en cours (au cas où deux
-			// changements arrivent malgré le debounce) pour éviter l'empilement
-			// de sprites/tweens qui causait le décalage
-			if (bgTween != null)
-			{
-				bgTween.cancel();
-				bgTween = null;
-			}
-			if (pendingNewBg != null)
-			{
-				remove(pendingNewBg, true);
-				pendingNewBg.destroy();
-				pendingNewBg = null;
-			}
-
+			// Fondu enchaîné EMPILÉ : on ne détruit plus le fond à moitié fondu quand un nouveau
+			// changement arrive (c'était ça qui faisait "sauter" l'image quand on scrolle vite).
+			// Chaque nouveau fond démarre à alpha 0 AU-DESSUS de la couche la plus haute et monte
+			// à 1 ; les couches en dessous finissent leur propre fondu sans être coupées.
 			var newBg:FlxSprite = new FlxSprite().loadGraphic(graphic);
 			newBg.antialiasing = ClientPrefs.globalAntialiasing;
 			newBg.screenCenter();
-			newBg.color = song.color;
+			newBg.color = targetColor;
 			newBg.alpha = 0;
+			bgFadingLayers.push(newBg);
 			pendingNewBg = newBg;
 
-			// insère le nouveau fond juste AU-DESSUS de l'ancien (index+1) pour
-			// qu'il se révèle progressivement par-dessus pendant le fondu,
-			// au lieu d'être caché dessous (ce qui donnait l'impression
-			// d'un délai puis d'un swap brutal sans fondu visible)
-			var oldIndex:Int = members.indexOf(bg);
-			insert(oldIndex + 1, newBg);
+			insert(members.indexOf(topBg) + 1, newBg);
 
 			if(colorTween != null) colorTween.cancel();
 
-			bgTween = FlxTween.tween(newBg, {alpha: 1}, 0.5, {
+			bgTween = FlxTween.tween(newBg, {alpha: 1}, 0.38, {
 				onComplete: function(twn:FlxTween)
 				{
+					var idx:Int = bgFadingLayers.indexOf(newBg);
+					if (idx == -1) return;
+
+					// newBg est maintenant totalement opaque : tout ce qui est dessous est caché,
+					// on peut le libérer sans aucun effet visible.
+					for (i in 0...idx)
+					{
+						var covered:FlxSprite = bgFadingLayers[i];
+						FlxTween.cancelTweensOf(covered);
+						remove(covered, true);
+						covered.destroy();
+					}
+					bgFadingLayers.splice(0, idx + 1);
+
+					FlxTween.cancelTweensOf(bg);
 					remove(bg, true);
 					bg.destroy();
 					bg = newBg;
-					pendingNewBg = null;
-					bgTween = null;
+
+					if (pendingNewBg == newBg) pendingNewBg = null;
+					if (bgFadingLayers.length == 0) bgTween = null;
 				}
 			});
 		}
@@ -608,7 +798,7 @@ for (i in 0...WeekData.weeksList.length) {
 		{
 			bg.loadGraphic(graphic);
 			bg.screenCenter();
-			bg.color = song.color;
+			bg.color = targetColor;
 		}
 	}
 
@@ -656,8 +846,18 @@ for (i in 0...WeekData.weeksList.length) {
 	override function update(elapsed:Float)
 	{
 		checkResetCheatCode();
+		updateSongAlphas(elapsed);
 
-		if (FlxG.sound.music.volume < 0.7)
+		// ArtworkSubstate.create() est différé d'un tick : dès que la zone sous le poster est connue,
+		// on affiche les graphiques de difficulté (voir syncDiffZone()).
+		if (!diffZoneReady)
+		{
+			syncDiffZone();
+			if (diffZoneReady) updateDifficultyGraphics();
+		}
+
+		var musicFading:Bool = FlxG.sound.music.fadeTween != null && !FlxG.sound.music.fadeTween.finished;
+		if (!musicFading && FlxG.sound.music.volume < 0.7)
 		{
 			FlxG.sound.music.volume += 0.5 * FlxG.elapsed;
 		}
@@ -731,6 +931,13 @@ for (i in 0...WeekData.weeksList.length) {
 			}
 		}
 
+		// Les flèches s'enfoncent tant que la touche est maintenue (comme le Story Mode)
+		if (diffArrowRight != null && diffArrowLeft != null)
+		{
+			diffArrowRight.animation.play(controls.UI_RIGHT ? 'press' : 'idle');
+			diffArrowLeft.animation.play(controls.UI_LEFT ? 'press' : 'idle');
+		}
+
 		if (controls.UI_LEFT_P)
 			changeDiff(-1);
 		else if (controls.UI_RIGHT_P)
@@ -781,6 +988,11 @@ if (trackKey != instNamePlaying)
 	}
 	else
 	{
+		if (FlxG.sound.music.fadeTween != null)
+		{
+			FlxG.sound.music.fadeTween.cancel();
+			FlxG.sound.music.fadeTween = null;
+		}
 		FlxG.sound.music.volume = 0;
 		FlxG.sound.playMusic(streamedInst != null ? streamedInst : Paths.inst(targetTrack, diffSuffix), 0);
 		instNamePlaying = trackKey;
@@ -796,6 +1008,7 @@ if (trackKey != instNamePlaying)
 
 		Conductor.changeBPM(bpm);
 		Conductor.mapBPMChanges(PlayState.SONG);
+		Conductor.songPosition = FlxG.sound.music.time;
 
 		curStep = 0;
 		curBeat = 0;
@@ -808,7 +1021,8 @@ if (trackKey != instNamePlaying)
 
 			if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 				var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
-				artSub.updateArtworkForSong(songs[curSelected].songName, songs[curSelected].color);
+				artSub.updateArtworkForSong(songs[curSelected].songName, getSongColor(songs[curSelected]));
+				artSub.setAccentColor(getSongColor(songs[curSelected]));
 			}
 
 			if (trackKey == instNamePlaying)
@@ -848,6 +1062,13 @@ if (trackKey != instNamePlaying)
 		// Ancien système (sous-menu "Yes/No") remplacé par un cheat code (voir checkResetCheatCode()).
 		// ---------------------------
 
+		// Active le boop uniquement quand l'inst de la selection est lancee (Conductor a jour)
+		if (instPlaying == curSelected && diffPlaying == curDifficulty && subState != null && Std.isOfType(subState, ArtworkSubstate))
+		{
+			var bopSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
+			if (!bopSub.bopSynced) bopSub.resyncBop();
+		}
+
 		// ✅ Synchronisation du Conductor avec la musique
 		if (FlxG.sound.music != null)
 		{
@@ -870,6 +1091,19 @@ if (trackKey != instNamePlaying)
 		}
 
 		super.update(elapsed);
+
+		// Supprime les anciens graphiques de difficulté une fois totalement fondus
+		var d:Int = dyingDiffItems.length;
+		while (d-- > 0)
+		{
+			var dead:DiffMenuItem = dyingDiffItems[d];
+			if (dead.alpha < 0.02)
+			{
+				dyingDiffItems.splice(d, 1);
+				diffGraphicsGroup.remove(dead, true);
+				dead.destroy();
+			}
+		}
 	}
 
 	public static function destroyFreeplayVocals() {
@@ -885,6 +1119,7 @@ if (trackKey != instNamePlaying)
 		if (subState != null && Std.isOfType(subState, ArtworkSubstate)) {
 			var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
 			artSub.setDifficulty(curDifficulty);
+			artSub.setAccentColor(getSongColor(songs[curSelected]));
 		}
 	}
 // Reproduit la logique de parsing de "difficulties" utilisée dans changeSelection(),
@@ -942,10 +1177,12 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		#end
 
 		PlayState.storyDifficulty = curDifficulty;
-		diffText.text = '< ' + CoolUtil.difficultyString() + ' >';
-		updateDifficultyDots();
+		updateDifficultyDisplay();
 		positionHighscore();
 		notifyArtworkDifficulty();
+
+		// Fond propre à la difficulté (si une image <chanson>-<difficulté>.png existe) ; sinon rien ne change
+		updateBackground(curSelected, true);
 
 		refreshIcon(curSelected); // Mise à jour de l'icône selon la difficulté
 
@@ -1023,16 +1260,47 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		}
 	}
 
+	// Opacité cible d'une musique selon sa distance à la sélection : pleine pour la sélectionnée, estompée
+	// pour les SONG_VISIBLE_RANGE voisines de chaque côté, nulle au-delà (elles ne gênent plus en haut / en bas).
+	function songTargetAlpha(targetY:Float):Float
+	{
+		var d:Float = Math.abs(targetY);
+		if (d < 0.5) return 1;
+		if (d <= SONG_VISIBLE_RANGE + 0.5) return SONG_UNSELECTED_ALPHA;
+		return 0;
+	}
+
+	// Rapproche en douceur l'opacité de chaque titre (et de son icône) de sa valeur cible.
+	function updateSongAlphas(elapsed:Float):Void
+	{
+		if (grpSongs == null) return;
+		var t:Float = CoolUtil.boundTo(elapsed * SONG_FADE_SPEED, 0, 1);
+
+		for (i in 0...grpSongs.members.length)
+		{
+			var item:Alphabet = grpSongs.members[i];
+			var a:Float = FlxMath.lerp(item.alpha, songTargetAlpha(item.targetY), t);
+			item.alpha = a;
+			if (i < iconArray.length) iconArray[i].alpha = a;
+		}
+	}
+
 	function changeSelection(change:Int = 0, playSound:Bool = true)
 	{
 		if(playSound) FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
 
+		var prevSelected:Int = curSelected;
 		curSelected += change;
 
 		if (curSelected < 0)
 			curSelected = songs.length - 1;
 		if (curSelected >= songs.length)
 			curSelected = 0;
+
+		// La chanson qu'on quitte retrouve son icône par défaut (sinon elle gardait l'icône
+		// personnalisée de la difficulté). La nouvelle chanson reçoit la sienne via changeDiff().
+		if (prevSelected != curSelected && prevSelected >= 0 && prevSelected < iconArray.length)
+			refreshIcon(prevSelected, true);
 
 		// Met à jour le fond (image + couleur) selon la nouvelle chanson sélectionnée
 		updateBackground(curSelected, true);
@@ -1048,26 +1316,19 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 
 		var bullShit:Int = 0;
 
-		for (i in 0...iconArray.length)
-		{
-			iconArray[i].alpha = 0.6;
-		}
-
-		iconArray[curSelected].alpha = 1;
-
+		// L'opacité des titres et des icônes (sélection pleine, précédente / suivante estompées, les autres
+		// masquées) est gérée en douceur par updateSongAlphas().
 		for (item in grpSongs.members)
 		{
 			item.targetY = bullShit - curSelected;
 			bullShit++;
+		}
 
-			item.alpha = 0.6;
-			// item.setGraphicSize(Std.int(item.width * 0.8));
-
-			if (item.targetY == 0)
-			{
-				item.alpha = 1;
-				// item.setGraphicSize(Std.int(item.width));
-			}
+		// Premier appel : on applique les opacités tout de suite (sinon tout apparaîtrait en fondu)
+		if (!songAlphaSnapped)
+		{
+			songAlphaSnapped = true;
+			updateSongAlphas(1000);
 		}
 
 		Paths.currentModDirectory = songs[curSelected].folder;
@@ -1108,7 +1369,7 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 			curDifficulty = newPos;
 		}
 
-		updateDifficultyDots();
+		updateDifficultyDisplay();
 
 		prefetchNearbyInsts();
 	}
@@ -1193,6 +1454,8 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		);
 		cheatHintBg.x = cheatHintText.x - CHEAT_HINT_PAD;
 		cheatHintBg.y = cheatHintText.y - CHEAT_HINT_PAD;
+
+		columnBottomY = cheatHintBg.y - CHEAT_HINT_GAP;
 	}
 
 	private function positionHighscore() {
@@ -1201,11 +1464,8 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		scoreBG.scale.x = FlxG.width - scoreText.x + 6;
 		scoreBG.x = FlxG.width - (scoreBG.scale.x / 2);
 
-		diffText.x = Std.int(scoreBG.x + (scoreBG.width / 2));
-		diffText.x -= diffText.width / 2;
-
-		// Misses + Rank centrés ensemble (comme un seul bloc) sous diffText,
-		// et décalés plus bas verticalement.
+		// Misses + Rank centrés ensemble (comme un seul bloc), juste sous le score
+		// (ils occupent la place de l'ancien texte de difficulté).
 		var gap:Float = 20; // espace entre "MISSES: x" et "RANK: y"
 		var groupWidth:Float = missesText.width + gap + rankText.width;
 		var groupStartX:Float = scoreBG.x + (scoreBG.width / 2) - (groupWidth / 2);
@@ -1213,49 +1473,308 @@ function getDifficultiesForWeek(week:WeekData):Array<String>
 		missesText.x = groupStartX;
 		rankText.x = groupStartX + missesText.width + gap;
 
-		missesText.y = diffText.y + diffText.height + 6; // "+6" = petit espace vertical
+		missesText.y = scoreText.y + 36;
 		rankText.y = missesText.y;
 
-		// Points centrés sous le bloc Misses/Rank
-		if (diffDotsGroup != null && diffDotsGroup.members.length > 0)
-		{
-			var dotsTotalWidth:Float = (diffDotsGroup.members.length - 1) * DOT_GAP;
-			var dotsStartX:Float = scoreBG.x + (scoreBG.width / 2) - (dotsTotalWidth / 2);
-			var dotsY:Float = missesText.y + missesText.height + 14;
+	}
 
-			for (i in 0...diffDotsGroup.members.length)
+	/**
+	 * Met à jour l'affichage de la difficulté (graphiques de menudifficulties) et le bloc
+	 * Score / Misses / Rank. Appelée à chaque changement de chanson (changeSelection) et de
+	 * difficulté (changeDiff), puisque la liste des difficultés peut varier d'une chanson à l'autre.
+	 */
+	function updateDifficultyDisplay():Void
+	{
+		positionHighscore();
+		updateDifficultyGraphics();
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// Graphiques de difficulté
+	// ---------------------------------------------------------------------------------------
+
+	// Dossier PRIORITAIRE (relatif à images/) où chercher les graphiques de la chanson sélectionnée :
+	//   - Week avec dossier spécifique (voir DIFF_WEEK_FOLDERS, ex: "weeka" -> "menudifficulties/smash") :
+	//     ce dossier, comme avant (comportement inchangé).
+	//   - Toutes les autres : "menudifficulties/freeplay".
+	// Dans les deux cas, createDiffItem() retombe ensuite sur "menudifficulties/" si l'image est absente.
+	function getDiffGraphicsFolder():String
+	{
+		var folder:String = DIFF_FOLDER_FREEPLAY;
+
+		if (curSelected >= 0 && curSelected < songs.length)
+		{
+			var weekIdx:Int = songs[curSelected].week;
+			if (weekIdx >= 0 && weekIdx < WeekData.weeksList.length)
 			{
-				var dot:FlxSprite = diffDotsGroup.members[i];
-				dot.x = dotsStartX + (i * DOT_GAP) - (dot.width / 2);
-				dot.y = dotsY;
+				var weekName:String = WeekData.weeksList[weekIdx].toLowerCase().trim();
+				if (DIFF_WEEK_FOLDERS.exists(weekName))
+					folder = DIFF_FOLDER_DEFAULT + '/' + DIFF_WEEK_FOLDERS.get(weekName);
+			}
+		}
+		return folder;
+	}
+
+	// Charge un graphique de difficulté : atlas animé si un .xml du même nom existe, image fixe sinon.
+	function loadDiffGraphic(item:DiffMenuItem, key:String):Void
+	{
+		if (Paths.fileExists('images/' + key + '.xml', openfl.utils.AssetType.TEXT))
+		{
+			item.frames = Paths.getSparrowAtlas(key);
+
+			// On déduit le préfixe d'animation depuis le nom de la 1re frame du XML
+			// (ex : "night0000" -> "night"), donc rien à écrire en dur.
+			var firstName:String = item.frames.frames[0].name;
+			var prefix:String = ~/\d+$/.replace(firstName, '');
+
+			item.animation.addByPrefix('idle', prefix, 24, true);
+			item.animation.play('idle');
+		}
+		else
+		{
+			item.loadGraphic(Paths.image(key));
+		}
+	}
+
+	// Crée le graphique d'une difficulté : images/<folder>/<difficulté en minuscules>.png
+	// (ex: "Very Hard" -> very-hard.png). Ordre de recherche :
+	//   1. le dossier prioritaire (menudifficulties/freeplay/, ou menudifficulties/smash/ pour la Week A)
+	//   2. le dossier de secours (menudifficulties/)
+	//   3. le nom de la difficulté dessiné en texte, pour qu'elle ne disparaisse jamais de la liste.
+	function createDiffItem(diffName:String, folder:String):DiffMenuItem
+	{
+		var item:DiffMenuItem = new DiffMenuItem();
+		var fileName:String = Paths.formatToSongPath(diffName.trim());
+		var keyWeek:String = folder + '/' + fileName;
+		var keyDefault:String = DIFF_FOLDER_DEFAULT + '/' + fileName;
+
+		if (Paths.fileExists('images/' + keyWeek + '.png', openfl.utils.AssetType.IMAGE))
+		{
+			loadDiffGraphic(item, keyWeek);
+		}
+		else if (Paths.fileExists('images/' + keyDefault + '.png', openfl.utils.AssetType.IMAGE))
+		{
+			loadDiffGraphic(item, keyDefault);
+		}
+		else
+		{
+			var t:FlxText = new FlxText(0, 0, 0, diffName.toUpperCase(), 32);
+			t.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			t.borderSize = 2;
+			item.fallback = true; // pas d'image : voir diffItemScale()
+			t.drawFrame(true);
+			item.loadGraphic(flixel.graphics.FlxGraphic.fromBitmapData(t.pixels.clone()));
+			t.destroy();
+		}
+
+		item.antialiasing = ClientPrefs.globalAntialiasing;
+		return item;
+	}
+
+	// Échelle d'un graphique : DIFF_SELECTOR_SCALE (comme le Story Mode), réduite seulement si l'image
+	// dépasse de la zone (largeur) ou de l'emplacement (hauteur). Un texte de secours (image manquante)
+	// n'est jamais agrandi.
+	function diffItemScale(it:DiffMenuItem):Float
+	{
+		// la largeur disponible pour le graphique laisse la place des deux flèches (+ leur écart)
+		var arrowsW:Float = (diffArrowRight != null) ? 2 * (diffArrowRight.width + DIFF_ARROW_GAP) : 0;
+		var fit:Float = Math.min(
+			(diffZoneWidth - arrowsW) / Math.max(1, it.frameWidth),
+			DIFF_SLOT_HEIGHT / Math.max(1, it.frameHeight));
+		return Math.min(it.fallback ? 1 : DIFF_SELECTOR_SCALE, fit);
+	}
+
+	// Récupère auprès d'ArtworkSubstate la zone située sous le poster (une seule fois : elle ne change plus).
+	function syncDiffZone():Void
+	{
+		if (diffZoneReady) return;
+		if (subState != null && Std.isOfType(subState, ArtworkSubstate))
+		{
+			var artSub:ArtworkSubstate = cast(subState, ArtworkSubstate);
+			if (artSub.diffZoneReady)
+			{
+				diffZoneCX = artSub.diffZoneCenterX;
+				diffZoneTop = artSub.diffZoneTopY;
+				diffZoneWidth = artSub.diffZoneWidth;
+				diffZoneHeight = artSub.diffZoneHeight;
+				diffZoneReady = true;
 			}
 		}
 	}
 
-	/**
-	 * Régénère les points de difficulté : un point par difficulté disponible
-	 * pour la chanson sélectionnée (CoolUtil.difficulties), celui correspondant
-	 * à curDifficulty étant coloré différemment des autres. Appelée à chaque
-	 * changement de chanson (changeSelection) et de difficulté (changeDiff),
-	 * puisque le nombre de points peut varier d'une chanson à l'autre.
-	 */
+	// Appelée par updateDifficultyDisplay(), donc à chaque changement de chanson ET de difficulté.
+	//  - Si la liste des difficultés (ou le dossier d'images) a changé : l'ancienne ligne glisse vers
+	//    la gauche en fondu, la nouvelle arrive depuis la gauche.
+	//  - Sinon : on se contente de déplacer la sélection (agrandissement + "pop" + fondu).
+	function updateDifficultyGraphics():Void
+	{
+		if (diffGraphicsGroup == null) return;
+
+		syncDiffZone();
+		if (!diffZoneReady) return; // le substate n'a pas encore calculé la zone sous le poster : repris dans update()
+
+		var names:Array<String> = CoolUtil.difficulties;
+		var folder:String = getDiffGraphicsFolder();
+		var key:String = Paths.currentModDirectory + '|' + folder + '|' + names.join('|');
+		var rebuilt:Bool = false;
+
+		if (key != diffGraphicsKey)
+		{
+			diffGraphicsKey = key;
+			rebuilt = true;
+
+			// Les anciens graphiques partent en fondu (supprimés dans update() une fois invisibles)
+			for (old in diffItems)
+			{
+				old.dying = true;
+				old.targetAlpha = 0;
+				old.targetX -= DIFF_SLIDE_X;
+				dyingDiffItems.push(old);
+			}
+			diffItems = [];
+
+			for (name in names)
+			{
+				var item:DiffMenuItem = createDiffItem(name, folder);
+				item.alpha = 0;
+				item.targetAlpha = 0;
+				diffGraphicsGroup.add(item);
+				diffItems.push(item);
+			}
+
+		}
+
+		layoutDifficultyGraphics();
+
+		if (rebuilt)
+		{
+			// Placement de départ : à la bonne place, décalé à gauche, légèrement plus petit
+			for (it in diffItems)
+			{
+				it.setPosition(it.targetX - DIFF_SLIDE_X - it.frameWidth / 2, it.targetY - it.frameHeight / 2);
+				it.scale.set(it.targetScale * 0.9, it.targetScale * 0.9);
+			}
+		}
+		else if (lastShownDifficulty != curDifficulty && curDifficulty >= 0 && curDifficulty < diffItems.length)
+		{
+			// Comme le Story Mode : l'ancien graphique disparaît tout de suite (plus de fondu croisé où deux
+			// images se superposent), et le nouveau apparaît en fondu en descendant légèrement.
+			for (it in diffItems)
+				it.alpha = 0;
+
+			var sel:DiffMenuItem = diffItems[curDifficulty];
+			sel.scale.set(sel.targetScale, sel.targetScale);
+			sel.setPosition(sel.targetX - sel.frameWidth / 2, sel.targetY - DIFF_DROP - sel.frameHeight / 2);
+			sel.speed = DIFF_IN_SPEED;
+		}
+
+		lastShownDifficulty = curDifficulty;
+
+		placeDiffArrows();
+		updateDifficultyDots();
+	}
+
+	// Place les flèches de part et d'autre du graphique actuel (comme le Story Mode, où la flèche gauche suit la
+	// largeur de l'image), centrées verticalement sur l'emplacement fixe du graphique.
+	function placeDiffArrows():Void
+	{
+		if (diffArrowLeft == null || diffArrowRight == null) return;
+		if (curDifficulty < 0 || curDifficulty >= diffItems.length) return;
+
+		var sel:DiffMenuItem = diffItems[curDifficulty];
+		var halfW:Float = sel.frameWidth * sel.targetScale / 2;
+		var cy:Float = diffZoneTop + DIFF_SLOT_HEIGHT / 2;
+
+		diffArrowLeft.x = diffZoneCX - halfW - DIFF_ARROW_GAP - diffArrowLeft.width;
+		diffArrowRight.x = diffZoneCX + halfW + DIFF_ARROW_GAP;
+		diffArrowLeft.y = cy - diffArrowLeft.height / 2;
+		diffArrowRight.y = cy - diffArrowRight.height / 2;
+
+		diffArrowLeft.visible = true;
+		diffArrowRight.visible = true;
+	}
+
+	// Reconstruit les points sous le graphique, comme le Story Mode : un point par difficulté disponible,
+	// celui de la difficulté actuelle en cyan. Ancrés sur l'emplacement FIXE du graphique (DIFF_SLOT_HEIGHT),
+	// PAS sur la hauteur de l'image : les images de certaines weeks (ex : Smash) ont une autre taille, et les
+	// points ne doivent pas monter / descendre d'une chanson à l'autre.
 	function updateDifficultyDots():Void
 	{
 		if (diffDotsGroup == null) return;
-
 		diffDotsGroup.clear();
 
 		var total:Int = CoolUtil.difficulties.length;
+		if (total <= 0) return;
+
+		var totalWidth:Float = (total * DIFF_DOT_SIZE) + ((total - 1) * DIFF_DOT_SPACING);
+		var startX:Float = diffZoneCX - totalWidth / 2;
+		var dotsY:Float = diffZoneTop + DIFF_SLOT_HEIGHT + DIFF_DOTS_DROP;
+
 		for (i in 0...total)
 		{
-			var dot:FlxSprite = new FlxSprite();
-			dot.makeGraphic(Std.int(DOT_RADIUS * 2), Std.int(DOT_RADIUS * 2), FlxColor.TRANSPARENT, true);
-			var dotColor:FlxColor = (i == curDifficulty) ? DOT_COLOR_CURRENT : DOT_COLOR_OTHER;
-			FlxSpriteUtil.drawCircle(dot, DOT_RADIUS, DOT_RADIUS, DOT_RADIUS, dotColor);
+			var dot:FlxSprite = new FlxSprite(startX + i * (DIFF_DOT_SIZE + DIFF_DOT_SPACING), dotsY);
+			dot.makeGraphic(Std.int(DIFF_DOT_SIZE), Std.int(DIFF_DOT_SIZE), FlxColor.TRANSPARENT, true);
+			FlxSpriteUtil.drawCircle(dot, -1, -1, DIFF_DOT_SIZE / 2, (i == curDifficulty) ? FlxColor.CYAN : FlxColor.WHITE);
+			dot.antialiasing = ClientPrefs.globalAntialiasing;
 			diffDotsGroup.add(dot);
 		}
+	}
 
-		positionHighscore();
+	// Calcule la position/taille/opacité CIBLE de chaque graphique (les DiffMenuItem s'y rendent en
+	// douceur). Tous les graphiques partagent le MÊME emplacement, centré sur l'axe de la colonne du poster,
+	// juste sous la barre de difficulté : seul celui de la difficulté actuelle est visible, les autres sont
+	// transparents (l'ancien s'efface pendant que le nouveau apparaît).
+	function layoutDifficultyGraphics():Void
+	{
+		var n:Int = diffItems.length;
+		if (n == 0) return;
+
+		var centerY:Float = diffZoneTop + DIFF_SLOT_HEIGHT / 2;
+
+		for (i in 0...n)
+		{
+			var it:DiffMenuItem = diffItems[i];
+			var isSel:Bool = (i == curDifficulty);
+
+			it.targetScale = diffItemScale(it);
+			it.targetAlpha = isSel ? 1 : 0;
+			it.targetX = diffZoneCX;
+			it.targetY = centerY;
+		}
+	}
+}
+
+/**
+ * Graphique de difficulté du Freeplay. Il se déplace / se redimensionne / change d'opacité
+ * tout seul vers ses valeurs "target" (interpolation exponentielle, indépendante du framerate).
+ * targetX / targetY désignent le CENTRE du graphique ; le sprite est mis à l'échelle autour de
+ * son centre (updateHitbox() n'est volontairement jamais appelé).
+ */
+class DiffMenuItem extends FlxSprite
+{
+	public var targetX:Float = 0;
+	public var targetY:Float = 0;
+	public var targetScale:Float = 1;
+	public var targetAlpha:Float = 1;
+	public var dying:Bool = false;
+	public var fallback:Bool = false; // true = texte de secours dessiné faute d'image
+	public var speed:Float = 12;      // vitesse de rapprochement vers les valeurs target
+
+	override function update(elapsed:Float)
+	{
+		super.update(elapsed);
+
+		var t:Float = CoolUtil.boundTo(elapsed * speed, 0, 1);
+
+		var cx:Float = FlxMath.lerp(x + frameWidth / 2, targetX, t);
+		var cy:Float = FlxMath.lerp(y + frameHeight / 2, targetY, t);
+		x = cx - frameWidth / 2;
+		y = cy - frameHeight / 2;
+
+		var sc:Float = FlxMath.lerp(scale.x, targetScale, t);
+		scale.set(sc, sc);
+
+		alpha = FlxMath.lerp(alpha, targetAlpha, t);
 	}
 }
 
@@ -1268,8 +1787,9 @@ class SongMetadata
 	public var folder:String = "";
 	public var difficultyIcons:Map<String, String> = new Map(); // Icônes par difficulté
 	public var difficulties:String = ''; // Difficultés propres à cette chanson (Freeplay uniquement)
+	public var difficultyColors:Map<String, Int> = new Map(); // Couleur de fond par difficulté (clé en minuscules)
 
-	public function new(song:String, week:Int, songCharacter:String, color:Int, ?diffIcons:Map<String, String>, ?songDifficulties:String)
+	public function new(song:String, week:Int, songCharacter:String, color:Int, ?diffIcons:Map<String, String>, ?songDifficulties:String, ?diffColors:Map<String, Int>)
 	{
 		this.songName = song;
 		this.week = week;
@@ -1279,5 +1799,6 @@ class SongMetadata
 		if(this.folder == null) this.folder = '';
 		if(diffIcons != null) this.difficultyIcons = diffIcons;
 		if(songDifficulties != null) this.difficulties = songDifficulties;
+		if(diffColors != null) this.difficultyColors = diffColors;
 	}
 }

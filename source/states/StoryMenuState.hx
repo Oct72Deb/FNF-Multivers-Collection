@@ -16,7 +16,9 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.group.FlxGroup;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
+import flixel.text.FlxText.FlxTextFormat;
 import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.util.FlxSpriteUtil;
@@ -47,10 +49,18 @@ class StoryMenuState extends MusicBeatState
 static inline var DIAGONAL_TOP_X:Float = 305;    // était 335
 static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 	static inline var YELLOW_HEIGHT:Int = 386;
-	static inline var DIFF_SELECTOR_SCALE:Float = 0.8; // réduit (était 1) : le sprite de difficulté ("HARD" etc) était trop gros
+	static inline var DIFF_SELECTOR_SCALE:Float = 0.7; // réduit (était 1) : le sprite de difficulté ("HARD" etc) était trop gros
 	static inline var DIFF_DOTS_DROP:Float = 16; // décalage vertical fixe des points de difficulté sous la rangée flèches/difficulté
 	static inline var DIFF_SELECTOR_RIGHT_MARGIN:Float = 24; // distance au bord droit de l'écran
 	static inline var DIFF_SELECTOR_GAP:Float = 10; // espace entre flèches et sprite de difficulté
+	// Colonnes BPM / DIFFICULTY (décalage par rapport à tracksSprite.x). Avant : BPM = 340, niveau = 510.
+	// Les deux colonnes sont décalées vers la gauche et plus espacées l'une de l'autre.
+	static inline var BPM_COL_OFFSET:Float = 285;
+	static inline var BPM_COL_WIDTH:Float = 150;
+	static inline var DIFF_COL_OFFSET:Float = 430;
+	static inline var DIFF_COL_WIDTH:Float = 220;
+	// Zone (largeur max) des graphiques de week précédente / suivante autour de l'hexagone
+	static inline var WEEK_SLOT_WIDTH:Float = 190;
 
 	var scoreText:FlxText;
 	var txtStats:FlxText; // ligne "SFC, Accuracy, Miss"
@@ -74,8 +84,26 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 	var grpWeekCharacters:FlxTypedGroup<MenuCharacter>;
 
 	var hexFrame:FlxSprite;
-	var txtWeekLabel:FlxText;
-	var txtWeekNumber:FlxText;
+	var txtDifficultyHeader:FlxText;
+
+	// --- Graphiques des weeks (précédente en haut, suivante en bas de l'hexagone) ---
+	var weekGraphics:Array<FlxGraphic> = [];   // graphique de chaque week (même index que loadedWeeks)
+	var weekBaseScale:Array<Float> = [];       // échelle d'ajustement de chaque logo dans l'hexagone
+	var prevWeekSpr:FlxSprite;
+	var nextWeekSpr:FlxSprite;
+	var prevBaseAlpha:Float = 0.6;
+	var nextBaseAlpha:Float = 0.6;
+	var slotH:Float = 90;
+	var topSlotY:Float = 0;
+	var bottomSlotY:Float = 0;
+
+	// --- Animation ---
+	var animTime:Float = 0;       // temps pour les mouvements d'idle (flottement / pulsation)
+	var popT:Float = 1;           // 0 -> 1 : "pop" élastique du logo central au changement de week
+	var slideT:Float = 1;         // 0 -> 1 : glissement + fondu des logos précédent/suivant
+	var slideDir:Int = 1;
+	var popTween:FlxTween;
+	var slideTween:FlxTween;
 	var upArrow:FlxSprite;
 	var downArrow:FlxSprite;
 	var lockIcon:FlxSprite;
@@ -143,10 +171,26 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		bgSprite = new FlxSprite(Math.min(DIAGONAL_TOP_X, DIAGONAL_BOTTOM_X), TOP_BAR_HEIGHT);
 		bgSprite.antialiasing = ClientPrefs.globalAntialiasing;
 
+		// Même fond que celui du personnage affiché dans le menu principal (mis en cache par MainMenuState),
+		// exactement comme dans GalleryState. Ajouté en premier : il reste derrière tout le reste.
+		var charBg:FlxSprite = new FlxSprite().loadGraphic(Paths.image(MainMenuState.lastBgGraphicPath));
+		charBg.antialiasing = ClientPrefs.globalAntialiasing;
+		charBg.screenCenter();
+		add(charBg);
+
+		// Particules (cœurs / cristaux / étoiles) du personnage courant, comme dans GalleryState
+		MainMenuState.addMenuParticles(this);
+
+		// Fond noir à 70 % d'opacité par-dessus le background du personnage (0 = invisible, 1 = noir total)
+		var blackOverlay:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
+		blackOverlay.alpha = 0.7;
+		add(blackOverlay);
+
 		grpWeekText = new FlxTypedGroup<MenuItem>();
 		add(grpWeekText);
 
 		var blackBarThingie:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, TOP_BAR_HEIGHT, FlxColor.BLACK);
+		blackBarThingie.alpha = 0;
 		add(blackBarThingie);
 
 		grpWeekCharacters = new FlxTypedGroup<MenuCharacter>();
@@ -182,6 +226,8 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 				var hexLogoFit:Float = Math.min(1, Math.min(hexLogoMaxW / weekThing.width, hexLogoMaxH / weekThing.height));
 				weekThing.scale.set(hexLogoFit, hexLogoFit);
 				weekThing.updateHitbox();
+				weekGraphics.push(weekThing.graphic);
+				weekBaseScale.push(hexLogoFit);
 				num++;
 			}
 		}
@@ -225,7 +271,7 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		upArrow.angle = 90;
 		upArrow.x -= upArrow.width / 2; // centrage horizontal : correct quel que soit l'angle, car le pivot de rotation est (x + width/2)
 		upArrow.y = hexFrame.y - arrowColumnGap - upArrow.height / 2 - upArrow.width / 2;
-		// bord visuel supérieur de upArrow (utile pour placer txtWeekLabel juste au-dessus) :
+		// bord visuel supérieur de upArrow (utile pour placer le graphique de la week précédente juste au-dessus) :
 		var upArrowTopEdge:Float = hexFrame.y - arrowColumnGap - upArrow.width;
 
 		downArrow = new FlxSprite(LEFT_COL_X, 0);
@@ -237,24 +283,19 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		downArrow.angle = -90;
 		downArrow.x -= downArrow.width / 2;
 		downArrow.y = hexFrame.y + hexFrame.height + arrowColumnGap - downArrow.height / 2 + downArrow.width / 2;
-		// bord visuel inférieur de downArrow (utile pour placer txtWeekNumber juste en dessous) :
+		// bord visuel inférieur de downArrow (utile pour placer le graphique de la week suivante juste en dessous) :
 		var downArrowBottomEdge:Float = hexFrame.y + hexFrame.height + arrowColumnGap + downArrow.width;
 
-		txtWeekLabel = new FlxText(0, 0, LEFT_COL_WIDTH, "WEEK", 40);
-		txtWeekLabel.setFormat("VCR OSD Mono", 40, FlxColor.WHITE, CENTER);
-		txtWeekLabel.borderStyle = OUTLINE;
-		txtWeekLabel.borderColor = FlxColor.BLACK;
-		txtWeekLabel.borderSize = 2;
-		txtWeekLabel.x = LEFT_COL_X - LEFT_COL_WIDTH / 2;
-		txtWeekLabel.y = upArrowTopEdge - labelGap - txtWeekLabel.height;
+		// Les anciens textes "WEEK" / "WEEK n" sont remplacés par les graphiques des weeks voisines :
+		// week précédente au-dessus de la flèche du haut, week suivante sous la flèche du bas.
+		slotH = Math.max(40, upArrowTopEdge - labelGap - TOP_BAR_HEIGHT - 6);
+		topSlotY = upArrowTopEdge - labelGap - slotH;
+		bottomSlotY = downArrowBottomEdge + labelGap;
 
-		txtWeekNumber = new FlxText(0, 0, LEFT_COL_WIDTH, "", 40);
-		txtWeekNumber.setFormat("VCR OSD Mono", 40, FlxColor.WHITE, CENTER);
-		txtWeekNumber.borderStyle = OUTLINE;
-		txtWeekNumber.borderColor = FlxColor.BLACK;
-		txtWeekNumber.borderSize = 2;
-		txtWeekNumber.x = LEFT_COL_X - LEFT_COL_WIDTH / 2;
-		txtWeekNumber.y = downArrowBottomEdge + labelGap;
+		prevWeekSpr = new FlxSprite();
+		prevWeekSpr.antialiasing = ClientPrefs.globalAntialiasing;
+		nextWeekSpr = new FlxSprite();
+		nextWeekSpr.antialiasing = ClientPrefs.globalAntialiasing;
 
 		lockIcon = new FlxSprite(0, 0);
 		lockIcon.frames = ui_tex;
@@ -319,20 +360,24 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		add(grpWeekCharacters);
 
 		add(hexFrame);
-		add(txtWeekLabel);
-		add(txtWeekNumber);
+		add(prevWeekSpr);
+		add(nextWeekSpr);
 		add(upArrow);
 		add(downArrow);
 		add(lockIcon);
 
 		// --- Tracklist + BPM (bas gauche/centre) ---
-		var tracksSprite:FlxSprite = new FlxSprite(DIAGONAL_TOP_X + 10, TOP_BAR_HEIGHT + YELLOW_HEIGHT + 40).loadGraphic(Paths.image('Menu_Tracks'));
+		var tracksSprite:FlxSprite = new FlxSprite(DIAGONAL_TOP_X - 30, TOP_BAR_HEIGHT + YELLOW_HEIGHT + 40).loadGraphic(Paths.image('Menu_Tracks'));
 		tracksSprite.antialiasing = ClientPrefs.globalAntialiasing;
 		add(tracksSprite);
 
-		txtBpmHeader = new FlxText(tracksSprite.x + 340, tracksSprite.y, 150, "BPM", 32);
+		txtBpmHeader = new FlxText(tracksSprite.x + BPM_COL_OFFSET, tracksSprite.y, BPM_COL_WIDTH, "BPM", 32);
 		txtBpmHeader.setFormat("VCR OSD Mono", 32, FlxColor.WHITE, CENTER);
 		add(txtBpmHeader);
+
+		txtDifficultyHeader = new FlxText(tracksSprite.x + DIFF_COL_OFFSET, tracksSprite.y, DIFF_COL_WIDTH, "DIFFICULTY", 32);
+		txtDifficultyHeader.setFormat("VCR OSD Mono", 32, FlxColor.WHITE, CENTER);
+		add(txtDifficultyHeader);
 
 		txtTracklist = new FlxText(tracksSprite.x, tracksSprite.y + 60, 320, "", 32);
 		txtTracklist.alignment = LEFT;
@@ -340,7 +385,7 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		txtTracklist.color = 0xFFe55777;
 		add(txtTracklist);
 
-		txtBpmList = new FlxText(txtBpmHeader.x, txtTracklist.y, 150, "", 32);
+		txtBpmList = new FlxText(txtBpmHeader.x, txtTracklist.y, BPM_COL_WIDTH, "", 32);
 		txtBpmList.alignment = CENTER;
 		txtBpmList.font = Paths.font("vcr.ttf");
 		txtBpmList.color = FlxColor.WHITE;
@@ -348,7 +393,7 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 
 		// Niveau de difficulté par piste (données ArtworkSubstate.ARTWORKS, comme en Freeplay),
 		// recalculé à chaque changement de difficulté via updateLevelList().
-		txtLevelList = new FlxText(txtBpmHeader.x + 170, txtTracklist.y, 90, "", 32);
+		txtLevelList = new FlxText(txtDifficultyHeader.x, txtTracklist.y, DIFF_COL_WIDTH, "", 32);
 		txtLevelList.alignment = CENTER;
 		txtLevelList.font = Paths.font("vcr.ttf");
 		txtLevelList.color = FlxColor.WHITE;
@@ -372,6 +417,8 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 
 	override function update(elapsed:Float)
 	{
+		animTime += elapsed;
+
 		lerpScore = Math.floor(FlxMath.lerp(lerpScore, intendedScore, CoolUtil.boundTo(elapsed * 30, 0, 1)));
 		if(Math.abs(intendedScore - lerpScore) < 10) lerpScore = intendedScore;
 
@@ -461,12 +508,23 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 				item.visible = true;
 				item.x = hexFrame.x + (hexFrame.width - item.width) / 2;
 				item.y = hexFrame.y + (hexFrame.height - item.height) / 2;
+
+				// Animation du logo central : léger flottement + pulsation en continu, et "pop"
+				// élastique (petit rebond) à chaque changement de week. On ne touche qu'à scale/y
+				// (sans updateHitbox) pour que le logo reste centré dans l'hexagone.
+				var baseScale:Float = weekBaseScale[grpWeekText.members.indexOf(item)];
+				var pulse:Float = 1 + 0.008 * Math.sin(animTime * 2.5);
+				var s:Float = baseScale * (0.88 + 0.12 * popT) * pulse;
+				item.scale.set(s, s);
+				item.y += Math.sin(animTime * 2) * 1;
 			}
 			else
 			{
 				item.visible = false;
 			}
 		}
+
+		updateWeekNeighbors();
 
 		if (lockIcon.visible)
 		{
@@ -586,6 +644,8 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 
 	// Ordre des rangs, du meilleur au pire (identique aux seuils ratingFC de PlayState.hx :
 	// S+ >= 100%, S >= 95%, A >= 90%, B >= 80%, C >= 70%, E >= 50%, F en dessous).
+	public static inline var STORY_KEY_PREFIX:String = "story_";
+
 	static var RANK_ORDER:Array<String> = ["S+", "S", "A", "B", "C", "E", "F"];
 
 	// Reconstruit la ligne de stats sous le score, pour la semaine + difficulté actuellement
@@ -607,26 +667,38 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		var songCount:Int = leWeek.songs.length;
 
 		var worstRankIndex:Int = -1;
-		var anyPlayed:Bool = false;
+		var playedCount:Int = 0;
 
 		for (i in 0...songCount)
 		{
-			var songName:String = leWeek.songs[i][0];
+			// Clé SÉPARÉE du Freeplay : les stats du mode Story/Arcade sont sauvegardées
+			// sous "story_" + nom de piste (voir PlayState), sinon elles se mélangent avec
+			// celles du Freeplay qui utilise le nom de piste seul.
+			var songName:String = STORY_KEY_PREFIX + leWeek.songs[i][0];
 			totalMiss += Highscore.getMisses(songName, curDifficulty);
 			ratingSum += Highscore.getRating(songName, curDifficulty);
 
 			var rank:String = Highscore.getRank(songName, curDifficulty);
 			if (rank != null && rank.length > 0)
 			{
-				anyPlayed = true;
+				playedCount++;
 				var idx:Int = RANK_ORDER.indexOf(rank);
 				if (idx < 0) idx = RANK_ORDER.length - 1; // rang inconnu/non reconnu -> traité comme le pire cas
 				if (idx > worstRankIndex) worstRankIndex = idx;
 			}
 		}
 
-		var avgAccuracy:Float = (songCount > 0) ? Highscore.floorDecimal((ratingSum / songCount) * 100, 2) : 0;
-		var rankLabel:String = anyPlayed ? RANK_ORDER[worstRankIndex] : "-";
+		// Les stats de la semaine ne s'affichent que si TOUTES les pistes ont été jouées en Story
+		// (sinon la moyenne et le rang seraient trompeurs).
+		var allPlayed:Bool = songCount > 0 && playedCount == songCount;
+		if (!allPlayed)
+		{
+			totalMiss = 0;
+			ratingSum = 0;
+		}
+
+		var avgAccuracy:Float = (allPlayed) ? Highscore.floorDecimal((ratingSum / songCount) * 100, 2) : 0;
+		var rankLabel:String = allPlayed ? RANK_ORDER[worstRankIndex] : "-";
 
 		txtStats.text = rankLabel + ' RANK   ' + avgAccuracy + '% ACCURACY   ' + totalMiss + ' MISS';
 	}
@@ -695,7 +767,7 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		}
 
 		lockIcon.visible = !unlocked;
-		txtWeekNumber.text = "WEEK " + (curWeek + 1);
+		refreshWeekNeighbors(change != 0, change);
 
 		bgSprite.visible = true;
 		var assetName:String = leWeek.weekBackground;
@@ -750,6 +822,67 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		updateText();
 	}
 
+	// Charge dans prevWeekSpr / nextWeekSpr les graphiques des weeks voisines (avec bouclage
+	// début <-> fin comme changeWeek) et lance, si on vient de changer de week, l'animation de transition.
+	function refreshWeekNeighbors(animate:Bool, change:Int):Void
+	{
+		var count:Int = loadedWeeks.length;
+		var showNeighbors:Bool = count > 1;
+		prevWeekSpr.visible = showNeighbors;
+		nextWeekSpr.visible = showNeighbors;
+
+		if (showNeighbors)
+		{
+			var prevIdx:Int = (curWeek - 1 + count) % count;
+			var nextIdx:Int = (curWeek + 1) % count;
+			setNeighborGraphic(prevWeekSpr, prevIdx);
+			setNeighborGraphic(nextWeekSpr, nextIdx);
+			prevBaseAlpha = weekIsLocked(loadedWeeks[prevIdx].fileName) ? 0.3 : 0.6;
+			nextBaseAlpha = weekIsLocked(loadedWeeks[nextIdx].fileName) ? 0.3 : 0.6;
+		}
+
+		if (animate)
+		{
+			if (popTween != null) popTween.cancel();
+			if (slideTween != null) slideTween.cancel();
+			slideDir = (change > 0) ? 1 : -1;
+			popT = 0;
+			slideT = 0;
+			popTween = FlxTween.num(0, 1, 0.55, {ease: FlxEase.elasticOut}, function(v:Float) { popT = v; });
+			slideTween = FlxTween.num(0, 1, 0.3, {ease: FlxEase.quadOut}, function(v:Float) { slideT = v; });
+		}
+	}
+
+	function setNeighborGraphic(spr:FlxSprite, weekIdx:Int):Void
+	{
+		var g:FlxGraphic = weekGraphics[weekIdx];
+		if (g == null)
+		{
+			spr.visible = false;
+			return;
+		}
+		spr.loadGraphic(g);
+		// Ajusté dans la zone dédiée (sans jamais agrandir au-delà de la taille d'origine)
+		var fit:Float = Math.min(1, Math.min(WEEK_SLOT_WIDTH / spr.frameWidth, slotH / spr.frameHeight));
+		spr.scale.set(fit, fit);
+		spr.updateHitbox();
+	}
+
+	// Position + animation d'idle des graphiques des weeks voisines : flottement en opposition de
+	// phase, plus glissement/fondu à l'arrivée d'une nouvelle week.
+	function updateWeekNeighbors():Void
+	{
+		var slideOffset:Float = slideDir * 8 * (1 - slideT);
+
+		prevWeekSpr.x = LEFT_COL_X - prevWeekSpr.width / 2;
+		prevWeekSpr.y = topSlotY + (slotH - prevWeekSpr.height) / 2 + Math.sin(animTime * 2) * 1 + slideOffset;
+		prevWeekSpr.alpha = prevBaseAlpha * slideT;
+
+		nextWeekSpr.x = LEFT_COL_X - nextWeekSpr.width / 2;
+		nextWeekSpr.y = bottomSlotY + (slotH - nextWeekSpr.height) / 2 + Math.sin(animTime * 2 + Math.PI) * 1 + slideOffset;
+		nextWeekSpr.alpha = nextBaseAlpha * slideT;
+	}
+
 	function weekIsLocked(name:String):Bool {
 		var leWeek:WeekData = WeekData.weeksLoaded.get(name);
 		return (!leWeek.startUnlocked && leWeek.weekBefore.length > 0 && (!weekCompleted.exists(leWeek.weekBefore) || !weekCompleted.get(leWeek.weekBefore)));
@@ -794,16 +927,27 @@ static inline var DIAGONAL_BOTTOM_X:Float = 255; // était 285
 		var leWeek:WeekData = loadedWeeks[curWeek];
 		var diffKey:String = Paths.formatToSongPath(CoolUtil.difficulties[curDifficulty]);
 
-		txtLevelList.text = '';
+		var fullText:String = '';
+		var colorRanges:Array<{start:Int, end:Int, color:FlxColor}> = [];
 		for (i in 0...leWeek.songs.length)
 		{
 			var songName:String = leWeek.songs[i][0];
 			var entry = ArtworkSubstate.findEntry(Paths.formatToSongPath(songName));
 			var levelStr:String = '-';
 			if (entry != null && entry.levels != null && entry.levels.exists(diffKey))
-				levelStr = Std.string(entry.levels.get(diffKey));
-			txtLevelList.text += levelStr + '\n';
+			{
+				var level:Int = entry.levels.get(diffKey);
+				levelStr = Std.string(level);
+				// Même couleur que le chiffre de difficulté du Freeplay
+				colorRanges.push({start: fullText.length, end: fullText.length + levelStr.length, color: ArtworkSubstate.getLevelColor(level)});
+			}
+			fullText += levelStr + '\n';
 		}
+
+		txtLevelList.text = fullText;
+		txtLevelList.clearFormats();
+		for (r in colorRanges)
+			txtLevelList.addFormat(new FlxTextFormat(r.color), r.start, r.end);
 	}
 
 	// Récupère le BPM du morceau pour l'afficher dans la colonne BPM (comme sur le concept art).

@@ -292,8 +292,10 @@ class GalleryState extends MusicBeatState {
     var ocNameText:FlxText;            // nom du personnage, en grand, coloré selon l'accent de l'OC
     var ocHeightText:FlxText;          // "Taille : ..."
     var ocDangerLabelText:FlxText;     // "Danger de l'adversaire :"
-    var ocDangerBadgeBG:FlxSprite;     // pastille colorée selon le niveau de danger
-    var ocDangerBadgeText:FlxText;     // texte à l'intérieur du badge (ex: "NORMAL")
+    static inline var OC_MAX_DANGER_BADGES:Int = 2; // nombre maximum de badges affichables côte à côte
+    var ocDangerBadgeBGs:Array<FlxSprite> = [];   // pastilles colorées (une par niveau de danger)
+    var ocDangerBadgeTexts:Array<FlxText> = [];   // textes à l'intérieur des badges (ex: "NORMAL")
+    var ocDangerSepTexts:Array<FlxText> = [];     // séparateurs "/" affichés entre deux badges
     var ocDivider:FlxSprite;           // ligne de séparation entre les stats et la description
     var ocDescriptionText:FlxText;     // description du personnage
     var ocPageText:FlxText;            // pagination "1 / N"
@@ -479,13 +481,24 @@ class GalleryState extends MusicBeatState {
         // ("Faible" = bleu, "Normal" = vert, "Élevé" = orange, "Extrême" = rouge, sinon gris).
         addOC(
             "Océane",
-            "1,80 m",
-            "Normal",
-            "C'est une fille plutôt mignonne, dotée d'une voix capable de transporter quiconque l'écoute jusque dans les étoiles. Elle semble être à la recherche de quelque chose… Peut-être d'aventures ? De rap battles ? Ou simplement de nouveaux horizons à explorer ? Difficile à dire.\nUne chose est certaine : elle est prête à affronter tout ce qui se dressera sur son chemin, toujours avec le sourire et, bien entendu, dans la plus grande bienveillance.",
+            "5'11 ft",
+            "Medium",
+            "She's a pretty cute girl with a voice that can carry anyone who listens all the way to the stars. She seems to be searching for something… Adventure, perhaps? Rap battles? Or simply new horizons to explore? Hard to say.\nOne thing is certain: she's ready to face whatever stands in her way, always with a smile and, of course, with the best of intentions.",
             "oceane",
             -1, -1, 0.45, false, false, 0, 1, true, // réglages d'artwork par défaut
             0xFFB33A8C,  // color -> fond légèrement------ teinté rose/violet en accord avec Océane
             0xFFFF6EC7   // accentColor -> couleur du nom "Océane" dans le panneau
+        );
+
+        addOC(
+            "Hélène",
+            "6'7 ft (Can grow taller)",
+            "Medium / Very High",
+            "Hélène is the kind of woman who could be described as a loner. She enjoys living a quiet, peaceful life on her own and has little patience for provocative people. She is also arrogant and considers herself superior to anyone shorter than her which is pretty much everyone. Indeed, Hélène dominates over just about everyone thanks to her imposing height. But even that isn't always enough for her: she can shrink others to make herself even taller. A power that suits her personality rather well, as she always seems to want to take up more space. Despite her solitary and self-centered nature, she never hesitates to put people back in their place, no matter what it takes.",
+            "helene",
+            -1, -1, 0.68, false, false, 0, 1, true, // réglages d'artwork par défaut
+            0xFFB33A8C,  // color -> fond légèrement------ teinté rose/violet en accord avec Hélène
+            0xFF1e2158   // accentColor -> couleur du nom "Hélène" dans le panneau
         );
 
         imageDisplay = new FlxSprite(0, 0);
@@ -538,16 +551,32 @@ class GalleryState extends MusicBeatState {
 
         // Largeur 0 = le champ s'ajuste automatiquement à la longueur du texte,
         // ce qui permet de positionner le badge juste après le label.
-        ocDangerLabelText = new FlxText(ocContentX, ocHeightText.y + 32, 0, "Danger de l'adversaire :", 20);
+        ocDangerLabelText = new FlxText(ocContentX, ocHeightText.y + 32, 0, "Opponent Threat Level:", 20);
         ocDangerLabelText.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, LEFT);
         ocInfoGroup.add(ocDangerLabelText);
 
-        ocDangerBadgeBG = new FlxSprite(0, 0);
-        ocInfoGroup.add(ocDangerBadgeBG);
+        // Un badge (fond + texte) par niveau de danger possible. Les badges inutilisés restent masqués.
+        for (i in 0...OC_MAX_DANGER_BADGES) {
+            var badgeBG:FlxSprite = new FlxSprite(0, 0);
+            badgeBG.visible = false;
+            ocInfoGroup.add(badgeBG);
+            ocDangerBadgeBGs.push(badgeBG);
 
-        ocDangerBadgeText = new FlxText(0, 0, 0, "", 18);
-        ocDangerBadgeText.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.WHITE, CENTER);
-        ocInfoGroup.add(ocDangerBadgeText);
+            var badgeText:FlxText = new FlxText(0, 0, 0, "", 18);
+            badgeText.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.WHITE, CENTER);
+            badgeText.visible = false;
+            ocInfoGroup.add(badgeText);
+            ocDangerBadgeTexts.push(badgeText);
+
+            // Séparateur "/" placé entre ce badge et le suivant (inutile après le dernier)
+            if (i < OC_MAX_DANGER_BADGES - 1) {
+                var sepText:FlxText = new FlxText(0, 0, 0, "/", 20);
+                sepText.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER);
+                sepText.visible = false;
+                ocInfoGroup.add(sepText);
+                ocDangerSepTexts.push(sepText);
+            }
+        }
 
         ocDivider = new FlxSprite(ocContentX, ocDangerLabelText.y + 44).makeGraphic(Std.int(ocContentW), 2, 0x88FFFFFF);
         ocInfoGroup.add(ocDivider);
@@ -743,7 +772,14 @@ class GalleryState extends MusicBeatState {
      * (interligne, en pixels) depuis Flixel 4.10.0. C'est donc addFormat/leading qui s'en
      * charge, côté appelant, une fois le texte final assigné (voir applyExtraLineSpacing).
      */
+    // Cache : le découpage est coûteux (une régénération complète du FlxText par mot) et son résultat
+    // ne dépend que de (police, largeur, texte). On ne le calcule donc qu'une fois par texte.
+    static var wrapCache:Map<String, String> = new Map();
+
     static function wrapToFieldWidth(field:FlxText, text:String):String {
+        var cacheKey:String = field.size + "|" + field.fieldWidth + "|" + text;
+        if (wrapCache.exists(cacheKey)) return wrapCache.get(cacheKey);
+
         var originalText:String = field.text;
         var maxWidth:Float = field.fieldWidth;
 
@@ -774,7 +810,9 @@ class GalleryState extends MusicBeatState {
         // le résultat de cette fonction à field.text.
         field.text = originalText;
 
-        return allLines.join("\n");
+        var wrapped:String = allLines.join("\n");
+        wrapCache.set(cacheKey, wrapped);
+        return wrapped;
     }
 
     /**
@@ -782,6 +820,9 @@ class GalleryState extends MusicBeatState {
      * police) sur tout le texte actuellement affiché par "field".
      */
     static function applyExtraLineSpacing(field:FlxText, extraPixels:Int):Void {
+        // clearFormats() est indispensable : addFormat() EMPILE les formats sans jamais retirer les
+        // anciens. Sans ça, chaque changement d'OC en ajoute 2 de plus et le rendu ralentit petit à petit.
+        field.clearFormats();
         var format = new FlxTextFormat();
         format.leading = extraPixels;
         field.addFormat(format, 0, field.text.length);
@@ -804,6 +845,7 @@ class GalleryState extends MusicBeatState {
     static function refreshTextNextFrame(field:FlxText, onReady:Void->Void):Void {
         var finalText:String = field.text;
         new flixel.util.FlxTimer().start(0, function(_) {
+            if (!field.alive || field.text != finalText) return; // la sélection a changé entre-temps : callback périmé
             field.text = "";
             field.text = finalText;
             onReady();
@@ -1046,6 +1088,7 @@ class GalleryState extends MusicBeatState {
         authorNameText.visible = false;
 
         if (isCharacters) {
+            preloadOCArtworks();
             if (ocs.length > 0) changeOCSelection(0);
         } else {
             // "images" pointe vers la liste correspondant à la sous-catégorie choisie
@@ -1465,23 +1508,66 @@ class GalleryState extends MusicBeatState {
         ocNameText.text = oc.name;
         ocNameText.color = oc.accentColor;
 
-        ocHeightText.text = "Taille : " + oc.height;
+        ocHeightText.text = "Height: " + oc.height;
 
-        // --- Badge "Danger de l'adversaire", coloré selon le niveau ---
-        ocDangerBadgeText.text = oc.danger.toUpperCase();
-        ocDangerBadgeText.updateHitbox();
+        // --- Badges "Danger de l'adversaire", colorés selon le niveau ---
+        // Si le danger contient plusieurs niveaux séparés par "/" (ex: "Medium / Very High"),
+        // on affiche un badge distinct pour chacun, avec sa propre couleur.
+        var dangerLevels:Array<String> = oc.danger.split("/");
 
         var badgePadX:Float = 14;
         var badgePadY:Float = 6;
-        var badgeW:Int = Std.int(ocDangerBadgeText.width + badgePadX * 2);
-        var badgeH:Int = Std.int(ocDangerBadgeText.height + badgePadY * 2);
+        var badgeGap:Float = 8;
+        var badgeCursorX:Float = ocDangerLabelText.x + ocDangerLabelText.width + 10;
 
-        ocDangerBadgeBG.makeGraphic(badgeW, badgeH, dangerBadgeColor(oc.danger));
-        ocDangerBadgeBG.x = ocDangerLabelText.x + ocDangerLabelText.width + 10;
-        ocDangerBadgeBG.y = ocDangerLabelText.y - (badgeH - ocDangerLabelText.height) / 2;
+        for (i in 0...OC_MAX_DANGER_BADGES) {
+            var badgeBG:FlxSprite = ocDangerBadgeBGs[i];
+            var badgeText:FlxText = ocDangerBadgeTexts[i];
 
-        ocDangerBadgeText.x = ocDangerBadgeBG.x + badgePadX;
-        ocDangerBadgeText.y = ocDangerBadgeBG.y + badgePadY;
+            if (i >= dangerLevels.length) {
+                badgeBG.visible = false;
+                badgeText.visible = false;
+                continue;
+            }
+
+            var level:String = StringTools.trim(dangerLevels[i]);
+
+            badgeText.text = level.toUpperCase();
+            badgeText.updateHitbox();
+
+            var badgeW:Int = Std.int(badgeText.width + badgePadX * 2);
+            var badgeH:Int = Std.int(badgeText.height + badgePadY * 2);
+
+            badgeBG.makeGraphic(badgeW, badgeH, dangerBadgeColor(level));
+            badgeBG.x = badgeCursorX;
+            badgeBG.y = ocDangerLabelText.y - (badgeH - ocDangerLabelText.height) / 2;
+
+            badgeText.x = badgeBG.x + badgePadX;
+            badgeText.y = badgeBG.y + badgePadY;
+
+            badgeBG.visible = true;
+            badgeText.visible = true;
+
+            badgeCursorX += badgeW + badgeGap;
+
+            // "/" entre ce badge et le suivant, uniquement s'il y a un niveau après celui-ci
+            if (i < OC_MAX_DANGER_BADGES - 1) {
+                var sepText:FlxText = ocDangerSepTexts[i];
+                var hasNext:Bool = (i + 1 < dangerLevels.length);
+                sepText.visible = hasNext;
+                if (hasNext) {
+                    sepText.updateHitbox();
+                    sepText.x = badgeCursorX;
+                    sepText.y = ocDangerLabelText.y + (ocDangerLabelText.height - sepText.height) / 2;
+                    badgeCursorX += sepText.width + badgeGap;
+                }
+            }
+        }
+
+        // Masque les séparateurs des emplacements non utilisés
+        for (i in 0...ocDangerSepTexts.length) {
+            if (i + 1 >= dangerLevels.length) ocDangerSepTexts[i].visible = false;
+        }
 
         // --- Description, sous la ligne de séparation ---
         ocDescriptionText.text = wrapToFieldWidth(ocDescriptionText, oc.description);
@@ -1533,6 +1619,20 @@ class GalleryState extends MusicBeatState {
         if (change != 0) FlxG.sound.play(Paths.sound('scrollMenu'), 0.5); // change == 0 : arrivée dans une sous-catégorie (son déjà joué)
     }
 
+    // Décode tous les artworks d'OC une seule fois, à l'entrée dans Characters, au lieu de le faire
+    // (de façon synchrone, donc avec un gel) la première fois qu'on navigue vers chaque OC.
+    var ocArtworksPreloaded:Bool = false;
+    function preloadOCArtworks() {
+        if (ocArtworksPreloaded) return;
+        ocArtworksPreloaded = true;
+        for (oc in ocs) {
+            ocArtworkPath(oc.artwork);
+            // Remplit le cache de découpage du texte (coûteux) pour TOUS les OC dès maintenant,
+            // sinon le premier passage vers chaque OC provoque un petit freeze.
+            wrapToFieldWidth(ocDescriptionText, oc.description);
+        }
+    }
+
     // Assombrit une couleur d'accent pour en faire un fond discret et cohérent,
     // utilisé quand un OC ne précise pas de "color" explicite dans addOC().
     function autoThemeColor(accent:Int):Int {
@@ -1545,10 +1645,10 @@ class GalleryState extends MusicBeatState {
     function dangerBadgeColor(danger:String):Int {
         var d:String = StringTools.trim(danger).toLowerCase();
         return switch (d) {
-            case "faible": 0xFF29B6F6;             // bleu clair
-            case "normal": 0xFF43A047;              // vert
-            case "élevé", "eleve", "haut": 0xFFFB8C00; // orange
-            case "extrême", "extreme": 0xFFE53935;  // rouge
+            case "low": 0xFF29B6F6;             // bleu clair
+            case "medium": 0xFF43A047;              // vert
+            case "high", "eleve", "haut": 0xFFFB8C00; // orange
+            case "very high", "extreme": 0xFFE53935;  // rouge
             default: 0xFF757575;                    // gris neutre pour toute valeur non reconnue
         }
     }

@@ -1,10 +1,14 @@
-# Ignore tout le contenu de export/, mais garde here.txt pour que le dossier
-# existe quand même sur GitHub (Git ne suit jamais les dossiers vides).
+
+# Ignorer le contenu de export/, mais conserver here.txt
 export/*
 !export/here.txt
 
+# Fichier de version local
 .local_version.txt
 
-# Fichier perso a pas intégré dans github
+# Fichiers personnels à ne pas envoyer sur GitHub
 *.Ink
+*.ink
+*.bat
+*.ps1
 PushSrc.bat

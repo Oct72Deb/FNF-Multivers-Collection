@@ -84,7 +84,7 @@ class ChartingState extends MusicBeatState
 	var eventStuff:Array<Dynamic> =
 	[
 		['', "Nothing. Yep, that's right."],
-		['Dadbattle Spotlight', "Used in Dad Battle,\nValue 1: 0/1 = ON/OFF,\n2 = Target Dad\n3 = Target BF"],
+		['Dadbattle Spotlight', "Used in Dad Battle,\nValue 1: 0 = OFF,\n1 = Target Dad\n2 = Target BF\n3 = Target both"],
 		['Hey!', "Plays the \"Hey!\" animation from Bopeebo,\nValue 1: BF = Only Boyfriend, GF = Only Girlfriend,\nSomething else = Both.\nValue 2: Custom animation duration,\nleave it blank for 0.6s"],
 		['Set GF Speed', "Sets GF head bopping speed,\nValue 1: 1 = Normal speed,\n2 = 1/2 speed, 4 = 1/4 speed etc.\nUsed on Fresh during the beatbox parts.\n\nWarning: Value must be integer!"],
 		['Philly Glow', "Exclusive to Week 3\nValue 1: 0/1/2 = OFF/ON/Reset Gradient\n \nNo, i won't add it to other weeks."],
@@ -418,7 +418,7 @@ class ChartingState extends MusicBeatState
 		UI_songTitle = new FlxUIInputText(10, 10, 70, _song.song, 8);
 		blockPressWhileTypingOn.push(UI_songTitle);
 
-		var check_instrumental = new FlxUICheckBox(10, 25, null, null, "Has Inst Track", 100);
+		var check_instrumental = new FlxUICheckBox(10, 25, null, null, "Has inst track", 100);
 		check_instrumental.checked = _song.needsInstrumental;
 		// _song.needsInstrumental = check_instrumental.checked;
 		check_instrumental.callback = function()
@@ -481,6 +481,29 @@ class ChartingState extends MusicBeatState
 		var saveEvents:FlxButton = new FlxButton(110, reloadSongJson.y, 'Save Events', function ()
 		{
 			saveEvents();
+		});
+
+		var loadEvents2Json:FlxButton = new FlxButton(loadEventJson.x, loadEventJson.y + 30, 'Load Events2', function()
+		{
+			var songName:String = Paths.formatToSongPath(_song.song);
+			var file:String = Paths.json(songName + '/events2');
+			#if sys
+			if (#if MODS_ALLOWED FileSystem.exists(Paths.modsJson(songName + '/events2')) || #end FileSystem.exists(file))
+			#else
+			if (OpenFlAssets.exists(file))
+			#end
+			{
+				clearEvents();
+				var events:SwagSong = Song.loadFromJson('events2', songName);
+				_song.events = events.events;
+				curEventsValidDifficulties = Reflect.field(events, 'validDifficulties');
+				changeSection(curSec);
+			}
+		});
+
+		var saveEvents2:FlxButton = new FlxButton(110, loadEvents2Json.y, 'Save Events2', function ()
+		{
+			this.saveEvents('events2');
 		});
 
 		var clear_events:FlxButton = new FlxButton(320, 310, 'Clear events', function()
@@ -639,6 +662,8 @@ class ChartingState extends MusicBeatState
 		tab_group_song.add(reloadSongJson);
 		tab_group_song.add(loadAutosaveBtn);
 		tab_group_song.add(loadEventJson);
+		tab_group_song.add(loadEvents2Json);
+		tab_group_song.add(saveEvents2);
 		tab_group_song.add(stepperBPM);
 		tab_group_song.add(stepperSpeed);
 		tab_group_song.add(reloadNotesButton);
@@ -3018,14 +3043,15 @@ private function saveLevel()
 		return FlxSort.byValues(FlxSort.ASCENDING, Obj1[0], Obj2[0]);
 	}
 
-	private function saveEvents()
+	private function saveEvents(fileName:String = 'events')
 	{
 		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
 
 		// Si aucune liste n'a été chargée/définie, on applique par défaut Easy/Normal/Hard.
 		// Modifiable ensuite à la main dans le JSON pour cibler d'autres difficultés.
+		// events2 = difficultes alternatives (erect / nightmare), events = easy / normal / hard.
 		if (curEventsValidDifficulties == null)
-			curEventsValidDifficulties = ["easy", "normal", "hard"];
+			curEventsValidDifficulties = (fileName == 'events2') ? ["erect", "nightmare"] : ["easy", "normal", "hard"];
 
 		var eventsSong:Dynamic = {
 			events: _song.events,
@@ -3043,7 +3069,7 @@ private function saveLevel()
 			_file.addEventListener(Event.COMPLETE, onSaveComplete);
 			_file.addEventListener(Event.CANCEL, onSaveCancel);
 			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
-			_file.save(data.trim(), "events.json");
+			_file.save(data.trim(), fileName + ".json");
 		}
 	}
 
